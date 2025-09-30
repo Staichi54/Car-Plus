@@ -46,6 +46,7 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "vendedor") {
     <a href="Consultas.php" class="btn">Consultas Rápidas</a>
 <br>
     
-    <a href="logout.php" class="btn">Cerrar Sesión</a>
+    <a href="Logout.php" class="btn">Cerrar Sesión</a>
 </body>
 </html>
+
