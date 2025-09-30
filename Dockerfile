@@ -2,12 +2,13 @@ FROM php:8.2-apache
 
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
-    gnupg2 \
+    gnupg \
     apt-transport-https \
     software-properties-common \
     curl \
     unzip \
     libzip-dev \
+    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Importar la clave y el repo de Microsoft
@@ -18,7 +19,6 @@ RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - 
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y \
     msodbcsql17 \
     mssql-tools \
-    unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Agregar mssql-tools al PATH
@@ -38,4 +38,3 @@ RUN a2enmod rewrite
 COPY . /var/www/html
 
 EXPOSE 80
-
