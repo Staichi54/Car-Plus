@@ -151,7 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Mensaje de error en PHP -->
     <?php if (!empty($error)) echo "<p class='error'>$error</p>"; ?>
 
-    <form method="POST" action="Index.php">
+    <form method="POST" action="index.php">
       <label for="usuario">Usuario:</label>
       <input type="text" id="usuario" name="usuario" required>
 
@@ -163,6 +163,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   </div>
 </body>
 </html>
+
 
 
 
