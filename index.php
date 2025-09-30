@@ -52,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <body>
     <h2>Iniciar Sesión</h2>
     <?php if (!empty($error)) echo "<p style='color:red;'>$error</p>"; ?>
-    <form method="POST" action="Index.php">
+    <form method="POST" action="index.php">
         <label>Usuario:</label>
         <input type="text" name="usuario" required><br><br>
         
@@ -63,3 +63,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     </form>
 </body>
 </html>
+
