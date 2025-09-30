@@ -77,94 +77,93 @@ if ($stmt === false) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Gestión de Vehículos</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        form {
-            width: 90%; margin: 20px auto; padding: 15px;
-            border: 1px solid #333; border-radius: 6px; background: #f9f9f9;
-        }
-        input, textarea { margin: 5px; padding: 6px; width: 200px; }
-        table { border-collapse: collapse; width: 90%; margin: 20px auto; }
-        th, td { border: 1px solid #333; padding: 8px; text-align: center; cursor: pointer; }
-        th { background-color: #444; color: #fff; }
-        .msg { text-align:center; font-weight:bold; color: green; }
-        .btn-danger { background:red; color:white; padding:6px 12px; border:none; border-radius:5px; cursor:pointer; }
-        .btn-danger:hover { background:darkred; }
-    </style>
+<meta charset="UTF-8">
+<title>Gestión de Vehículos</title>
+<style>
+    body { font-family: Arial, sans-serif; background:#1e1e1e; color:#f0f0f0; margin:0; }
+    h2 { text-align:center; color:#f7cbcb; margin:20px 0; text-shadow:-1px -1px 0 #ff3b3b,1px -1px 0 #ff3b3b,-1px 1px 0 #ff3b3b,1px 1px 0 #ff3b3b; }
+    form {
+        width:90%; max-width:800px; margin:20px auto; padding:20px;
+        border-radius:10px; background:#2a2a2a; box-shadow:0 0 12px rgba(0,0,0,0.6);
+        text-align:center;
+    }
+    input, textarea { margin:6px; padding:8px; width:200px; border:none; border-radius:6px; background:#3b3b3b; color:#f0f0f0; }
+    input:focus, textarea:focus { outline:none; border:1px solid #ff3b3b; background:#444; }
+    .btn { display:inline-block; margin:8px 5px; padding:10px 16px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; transition:0.3s ease; }
+    .btn-primary { background:#ff3b3b; color:#fff; }
+    .btn-primary:hover { background:#cc2e2e; transform:translateY(-2px); }
+    .btn-danger { background:#444; color:#f0f0f0; }
+    .btn-danger:hover { background:#666; }
+    .btn-cancel { background:#777; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px; }
+    .btn-cancel:hover { background:#999; }
+    table { border-collapse:collapse; width:90%; margin:20px auto; background:#2a2a2a; border-radius:10px; overflow:hidden; box-shadow:0 0 12px rgba(0,0,0,0.6); }
+    th, td { border:1px solid #444; padding:10px; text-align:center; }
+    th { background:#ff3b3b; color:#fff; }
+    tr { cursor:pointer; transition:background 0.3s ease; }
+    tr:hover { background:#3b3b3b; }
+    .msg { text-align:center; font-weight:bold; color:#6df76d; }
+    .volver { position:absolute; top:15px; left:20px; background:#444; color:#f0f0f0; padding:8px 12px; border-radius:8px; font-weight:bold; text-decoration:none; }
+    .volver:hover { background:#666; }
+</style>
 </head>
 <body>
-    <h2 style="text-align:center;">Gestión de Vehículos</h2>
+<a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
+<h2>Gestión de Vehículos</h2>
 
-    <?php if (!empty($mensaje)) echo "<p class='msg'>$mensaje</p>"; ?>
+<?php if (!empty($mensaje)) echo "<p class='msg'>$mensaje</p>"; ?>
 
-    <!-- Formulario para agregar/editar/eliminar -->
-    <form method="POST" action="Vehiculo.php">
-        <h3><?php echo $vehiculoEditar ? "Editar Vehículo" : "Agregar Vehículo"; ?></h3>
-        
-        <?php if ($vehiculoEditar) { ?>
-            <input type="hidden" name="id" value="<?php echo $vehiculoEditar['IdVehiculo']; ?>">
-        <?php } ?>
+<form method="POST" action="Vehiculo.php">
+    <h3><?php echo $vehiculoEditar ? "Editar Vehículo" : "Agregar Vehículo"; ?></h3>
+    <?php if ($vehiculoEditar) { ?>
+        <input type="hidden" name="id" value="<?php echo $vehiculoEditar['IdVehiculo']; ?>">
+    <?php } ?>
 
-        <input type="text" name="placa" placeholder="Placa" required 
-               value="<?php echo $vehiculoEditar['Placa'] ?? ''; ?>">
-        <input type="text" name="marca" placeholder="Marca" required 
-               value="<?php echo $vehiculoEditar['Marca'] ?? ''; ?>">
-        <input type="text" name="modelo" placeholder="Modelo" required 
-               value="<?php echo $vehiculoEditar['Modelo'] ?? ''; ?>">
-        <input type="number" name="anio" placeholder="Año" required 
-               value="<?php echo $vehiculoEditar['Anio'] ?? ''; ?>">
-        <input type="text" name="color" placeholder="Color" 
-               value="<?php echo $vehiculoEditar['Color'] ?? ''; ?>">
-        <input type="text" name="chasis" placeholder="N° Chasis" 
-               value="<?php echo $vehiculoEditar['NumeroChasis'] ?? ''; ?>">
-        <input type="text" name="motor" placeholder="N° Motor" 
-               value="<?php echo $vehiculoEditar['NumeroMotor'] ?? ''; ?>">
-        <textarea name="observaciones" placeholder="Observaciones" rows="2"><?php echo $vehiculoEditar['Observaciones'] ?? ''; ?></textarea>
-        <br>
+    <input type="text" name="placa" placeholder="Placa" required value="<?php echo $vehiculoEditar['Placa'] ?? ''; ?>">
+    <input type="text" name="marca" placeholder="Marca" required value="<?php echo $vehiculoEditar['Marca'] ?? ''; ?>">
+    <input type="text" name="modelo" placeholder="Modelo" required value="<?php echo $vehiculoEditar['Modelo'] ?? ''; ?>">
+    <input type="number" name="anio" placeholder="Año" required value="<?php echo $vehiculoEditar['Anio'] ?? ''; ?>">
+    <input type="text" name="color" placeholder="Color" value="<?php echo $vehiculoEditar['Color'] ?? ''; ?>">
+    <input type="text" name="chasis" placeholder="N° Chasis" value="<?php echo $vehiculoEditar['NumeroChasis'] ?? ''; ?>">
+    <input type="text" name="motor" placeholder="N° Motor" value="<?php echo $vehiculoEditar['NumeroMotor'] ?? ''; ?>">
+    <textarea name="observaciones" placeholder="Observaciones" rows="2"><?php echo $vehiculoEditar['Observaciones'] ?? ''; ?></textarea>
+    <br>
 
-        <?php if ($vehiculoEditar) { ?>
-            <input type="submit" name="actualizar" value="Actualizar Vehículo">
-            <button type="submit" name="eliminar" class="btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este vehículo?');">Eliminar Vehículo</button>
-            <a href="Vehiculo.php">Cancelar</a>
-        <?php } else { ?>
-            <input type="submit" name="agregar" value="Agregar Vehículo">
-        <?php } ?>
-    </form>
+    <?php if ($vehiculoEditar) { ?>
+        <input type="submit" name="actualizar" value="Actualizar Vehículo" class="btn btn-primary">
+        <button type="submit" name="eliminar" class="btn btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este vehículo?');">Eliminar Vehículo</button>
+        <a href="Vehiculo.php" class="btn-cancel">Cancelar</a>
+    <?php } else { ?>
+        <input type="submit" name="agregar" value="Agregar Vehículo" class="btn btn-primary">
+    <?php } ?>
+</form>
 
-    <!-- Listado de vehículos -->
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Placa</th>
-            <th>Marca</th>
-            <th>Modelo</th>
-            <th>Año</th>
-            <th>Color</th>
-            <th>Chasis</th>
-            <th>Motor</th>
-            <th>Fecha Ingreso</th>
-            <th>Observaciones</th>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Placa</th>
+        <th>Marca</th>
+        <th>Modelo</th>
+        <th>Año</th>
+        <th>Color</th>
+        <th>Chasis</th>
+        <th>Motor</th>
+        <th>Fecha Ingreso</th>
+        <th>Observaciones</th>
+    </tr>
+    <?php while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) { ?>
+        <tr onclick="window.location.href='Vehiculo.php?editar=<?php echo $row['IdVehiculo']; ?>'">
+            <td><?php echo $row["IdVehiculo"]; ?></td>
+            <td><?php echo $row["Placa"]; ?></td>
+            <td><?php echo $row["Marca"]; ?></td>
+            <td><?php echo $row["Modelo"]; ?></td>
+            <td><?php echo $row["Anio"]; ?></td>
+            <td><?php echo $row["Color"]; ?></td>
+            <td><?php echo $row["NumeroChasis"]; ?></td>
+            <td><?php echo $row["NumeroMotor"]; ?></td>
+            <td><?php echo $row["FechaIngreso"] ? $row["FechaIngreso"]->format("Y-m-d") : ""; ?></td>
+            <td><?php echo $row["Observaciones"]; ?></td>
         </tr>
-        <?php while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) { ?>
-            <tr onclick="window.location.href='Vehiculo.php?editar=<?php echo $row['IdVehiculo']; ?>'">
-                <td><?php echo $row["IdVehiculo"]; ?></td>
-                <td><?php echo $row["Placa"]; ?></td>
-                <td><?php echo $row["Marca"]; ?></td>
-                <td><?php echo $row["Modelo"]; ?></td>
-                <td><?php echo $row["Anio"]; ?></td>
-                <td><?php echo $row["Color"]; ?></td>
-                <td><?php echo $row["NumeroChasis"]; ?></td>
-                <td><?php echo $row["NumeroMotor"]; ?></td>
-                <td><?php echo $row["FechaIngreso"] ? $row["FechaIngreso"]->format("Y-m-d") : ""; ?></td>
-                <td><?php echo $row["Observaciones"]; ?></td>
-            </tr>
-        <?php } ?>
-    </table>
-
-    <div style="text-align:center;">
-        <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
-    </div>
+    <?php } ?>
+</table>
 </body>
 </html>
