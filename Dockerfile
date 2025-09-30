@@ -3,15 +3,17 @@ FROM php:8.2-apache
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
     gnupg \
+    apt-transport-https \
+    software-properties-common \
     curl \
     unzip \
     libzip-dev \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Importar la clave y configurar el repo de Microsoft (sin apt-key)
-RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg \
-    && echo "deb [arch=amd64] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list
+# Importar clave y repo de Microsoft para ODBC
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl -sSL https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
 # Instalar ODBC y herramientas SQL
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y \
@@ -22,17 +24,29 @@ RUN apt-get update && ACCEPT_EULA=Y apt-get install -y \
 # Agregar mssql-tools al PATH
 ENV PATH="$PATH:/opt/mssql-tools/bin"
 
-# Instalar extensiones necesarias de PHP
+# Instalar extensiones PHP necesarias
 RUN docker-php-ext-install pdo pdo_mysql zip
 
-# Instalar SQLSRV y PDO_SQLSRV desde PECL
+# Instalar y habilitar drivers de SQL Server
 RUN pecl install sqlsrv pdo_sqlsrv \
     && docker-php-ext-enable sqlsrv pdo_sqlsrv
 
 # Habilitar mod_rewrite
 RUN a2enmod rewrite
 
-# Copiar tu aplicación
+# Configuración extra de Apache para permitir acceso
+RUN echo '<Directory "/var/www/html">\n\
+    Options Indexes FollowSymLinks\n\
+    AllowOverride All\n\
+    Require all granted\n\
+</Directory>' > /etc/apache2/conf-available/docker.conf \
+    && a2enconf docker
+
+# Copiar la aplicación
 COPY . /var/www/html
+
+# Dar permisos correctos a la app
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
 
 EXPOSE 80
