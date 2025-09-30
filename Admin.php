@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "admin") {
-    header("Location: Index.php");
+    header("Location: index.php");
     exit();
 }
 ?>
@@ -43,4 +43,5 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "admin") {
     <a href="Logout.php" class="btn">Cerrar Sesión</a>
 </body>
 </html>
+
 
