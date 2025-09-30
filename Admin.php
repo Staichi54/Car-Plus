@@ -40,6 +40,7 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "admin") {
     <br>
 
     <!-- Botón de logout -->
-    <a href="logout.php" class="btn">Cerrar Sesión</a>
+    <a href="Logout.php" class="btn">Cerrar Sesión</a>
 </body>
 </html>
+
