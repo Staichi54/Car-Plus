@@ -35,6 +35,7 @@ RUN pecl install sqlsrv pdo_sqlsrv \
 RUN a2enmod rewrite
 
 # Copiar tu aplicación
-COPY ./src /var/www/html
+COPY . /var/www/html
 
 EXPOSE 80
+
