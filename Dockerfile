@@ -3,8 +3,6 @@ FROM php:8.2-apache
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
     gnupg \
-    apt-transport-https \
-    software-properties-common \
     curl \
     unzip \
     libzip-dev \
