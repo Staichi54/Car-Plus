@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y \
     unixodbc-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Importar la clave y el repo de Microsoft
-RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl -sSL https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list
+# Importar la clave y configurar el repo de Microsoft (sin apt-key)
+RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/microsoft.gpg \
+    && echo "deb [arch=amd64] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list
 
 # Instalar ODBC y herramientas SQL
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y \
