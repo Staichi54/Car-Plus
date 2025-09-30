@@ -1,19 +1,25 @@
-FROM php:8.2-apache
+FROM php:8.2-apache-bullseye
+
+# Evitar interacciones en la instalación
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
     gnupg \
     apt-transport-https \
-    software-properties-common \
     curl \
     unzip \
     libzip-dev \
     unixodbc-dev \
+    locales \
     && rm -rf /var/lib/apt/lists/*
+
+# Configurar locale para evitar problemas con ODBC
+RUN echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen
 
 # Importar clave y repo de Microsoft para ODBC
 RUN curl -sSL https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-    && curl -sSL https://packages.microsoft.com/config/debian/12/prod.list > /etc/apt/sources.list.d/mssql-release.list
+    && curl -sSL https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list
 
 # Instalar ODBC y herramientas SQL
 RUN apt-get update && ACCEPT_EULA=Y apt-get install -y \
@@ -45,7 +51,7 @@ RUN echo '<Directory "/var/www/html">\n\
 # Copiar la aplicación
 COPY . /var/www/html
 
-# Dar permisos correctos a la app
+# Dar permisos correctos
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
