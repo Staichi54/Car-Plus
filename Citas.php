@@ -69,85 +69,243 @@ if (isset($_POST["eliminar"])) {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Gestión de Citas</title>
-    <style>
-        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 8px; }
-        tr:hover { background-color: #f2f2f2; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Gestión de Citas</title>
+  <style>
+    /* Fondo general en modo oscuro */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      text-align: center;
+    }
+
+    /* Encabezado */
+    h1 {
+      margin: 20px 0 10px;
+      color: #f7cbcb;
+      font-weight: bold;
+      font-size: 28px;
+      text-shadow: 
+        -1px -1px 0 #ff3b3b,
+         1px -1px 0 #ff3b3b,
+        -1px  1px 0 #ff3b3b,
+         1px  1px 0 #ff3b3b;
+    }
+
+    h2 {
+      color: #ff3b3b;
+      margin: 20px 0 10px;
+    }
+
+    /* Logo */
+    .logo {
+      width: 120px;
+      margin: 20px auto;
+      display: block;
+    }
+
+    /* Formulario */
+    form {
+      width: 90%;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: #2a2a2a;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: left;
+      color: #f0f0f0;
+    }
+
+    input, textarea, select {
+      margin: 6px 0;
+      padding: 8px;
+      width: 95%;
+      border: none;
+      border-radius: 6px;
+      background: #3b3b3b;
+      color: #f0f0f0;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border: 1px solid #ff3b3b;
+      background: #444;
+    }
+
+    button {
+      display: inline-block;
+      margin: 8px 5px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+      color: #fff;
+    }
+
+    button[name="agregar"] { background: #ff3b3b; }
+    button[name="agregar"]:hover { background: #cc2e2e; }
+
+    button[name="modificar"] { background: #ffaa2e; }
+    button[name="modificar"]:hover { background: #e68a00; }
+
+    button[name="eliminar"] { background: #444; }
+    button[name="eliminar"]:hover { background: #666; }
+
+    /* Contenedor de botones */
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    /* Tabla */
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: 20px auto;
+      background: #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    }
+
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #ff3b3b;
+      color: #fff;
+    }
+
+    tr {
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    tr:hover {
+      background: #3b3b3b;
+    }
+
+    /* Enlace volver */
+/* Estilos del botón Volver */
+.volver {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    background-color: #444;
+    color: #f0f0f0;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.volver:hover {
+    background-color: #666;
+    transform: scale(1.05);
+}
+
+.logo-btn {
+    width: 22px;
+    height: 22px;
+}
+
+  </style>
 </head>
 <body>
-    <h1>Gestión de Citas</h1>
+  <!-- Botón volver -->
+  <a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
 
-    <!-- Formulario -->
-    <form method="post">
-        <input type="hidden" name="idCita" id="idCita">
+  <!-- Logo -->
+  <img src="logo.png" alt="Logo Auto Parts" class="logo">
 
-        <label>ID Vehículo:</label>
-        <input type="text" name="idVehiculo" id="idVehiculo" required><br><br>
+  <h1>Gestión de Citas</h1>
 
-        <label>Fecha:</label>
-        <input type="datetime-local" name="fecha" id="fecha" required><br><br>
+  <!-- Formulario -->
+  <form method="post">
+    <input type="hidden" name="idCita" id="idCita">
 
-        <label>Servicio:</label>
-        <input type="text" name="servicio" id="servicio" required><br><br>
+    <label>ID Vehículo:</label>
+    <input type="text" name="idVehiculo" id="idVehiculo" required>
 
-        <label>Estado:</label>
-        <input type="text" name="estado" id="estado" required><br><br>
+    <label>Fecha:</label>
+    <input type="datetime-local" name="fecha" id="fecha" required>
 
-        <label>Observaciones:</label>
-        <input type="text" name="observaciones" id="observaciones"><br><br>
+    <label>Servicio:</label>
+    <input type="text" name="servicio" id="servicio" required>
 
-        <button type="submit" name="agregar">Agregar</button>
-        <button type="submit" name="modificar">Modificar</button>
-        <button type="submit" name="eliminar">Eliminar</button>
-    </form>
+    <label>Estado:</label>
+    <input type="text" name="estado" id="estado" required>
 
-    <hr>
+    <label>Observaciones:</label>
+    <input type="text" name="observaciones" id="observaciones">
 
-    <!-- Tabla de citas -->
-    <h2>Listado de Citas</h2>
-    <table>
-        <tr>
-            <th>ID Cita</th>
-            <th>ID Vehículo</th>
-            <th>Fecha</th>
-            <th>Servicio</th>
-            <th>Estado</th>
-            <th>Observaciones</th>
-        </tr>
-        <?php
-        $sql = "SELECT * FROM Citas ORDER BY FechaCita DESC";
-        $result = sqlsrv_query($conn, $sql);
-        while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
-            $fechaInput = $row['FechaCita'] ? date_format($row['FechaCita'], 'Y-m-d\TH:i') : "";
-            $fechaMostrar = $row['FechaCita'] ? date_format($row['FechaCita'], 'Y-m-d H:i') : "";
-            echo "<tr onclick=\"cargarCita('{$row['IdCita']}', '{$row['IdVehiculo']}', '{$fechaInput}', '{$row['Servicio']}', '{$row['Estado']}', '{$row['Observaciones']}')\">";
-            echo "<td>".$row['IdCita']."</td>";
-            echo "<td>".$row['IdVehiculo']."</td>";
-            echo "<td>".$fechaMostrar."</td>";
-            echo "<td>".$row['Servicio']."</td>";
-            echo "<td>".$row['Estado']."</td>";
-            echo "<td>".$row['Observaciones']."</td>";
-            echo "</tr>";
-        }
-        ?>
-    </table>
+    <div class="btn-group">
+      <button type="submit" name="agregar">Agregar</button>
+      <button type="submit" name="modificar">Modificar</button>
+      <button type="submit" name="eliminar" onclick="return confirm('¿Seguro que deseas eliminar esta cita?');">Eliminar</button>
+    </div>
+  </form>
 
-    <!-- Script JS -->
-    <script>
-    function cargarCita(id, vehiculo, fecha, servicio, estado, obs) {
-        document.getElementById("idCita").value = id;
-        document.getElementById("idVehiculo").value = vehiculo;
-        document.getElementById("fecha").value = fecha;
-        document.getElementById("servicio").value = servicio;
-        document.getElementById("estado").value = estado;
-        document.getElementById("observaciones").value = obs;
+  <!-- Tabla de citas -->
+  <h2>Listado de Citas</h2>
+  <table>
+    <tr>
+      <th>ID Cita</th>
+      <th>ID Vehículo</th>
+      <th>Fecha</th>
+      <th>Servicio</th>
+      <th>Estado</th>
+      <th>Observaciones</th>
+    </tr>
+    <?php
+    $sql = "SELECT * FROM Citas ORDER BY FechaCita DESC";
+    $result = sqlsrv_query($conn, $sql);
+    while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
+        $fechaInput = $row['FechaCita'] ? date_format($row['FechaCita'], 'Y-m-d\TH:i') : "";
+        $fechaMostrar = $row['FechaCita'] ? date_format($row['FechaCita'], 'Y-m-d H:i') : "";
+        echo "<tr onclick=\"cargarCita('{$row['IdCita']}', '{$row['IdVehiculo']}', '{$fechaInput}', '{$row['Servicio']}', '{$row['Estado']}', '{$row['Observaciones']}')\">";
+        echo "<td>".$row['IdCita']."</td>";
+        echo "<td>".$row['IdVehiculo']."</td>";
+        echo "<td>".$fechaMostrar."</td>";
+        echo "<td>".$row['Servicio']."</td>";
+        echo "<td>".$row['Estado']."</td>";
+        echo "<td>".$row['Observaciones']."</td>";
+        echo "</tr>";
     }
-    </script>
+    ?>
+  </table>
 
-    <div style="text-align:center;">
-        <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
-    </div>  
+  <!-- Script JS -->
+  <script>
+  function cargarCita(id, vehiculo, fecha, servicio, estado, obs) {
+      document.getElementById("idCita").value = id;
+      document.getElementById("idVehiculo").value = vehiculo;
+      document.getElementById("fecha").value = fecha;
+      document.getElementById("servicio").value = servicio;
+      document.getElementById("estado").value = estado;
+      document.getElementById("observaciones").value = obs;
+  }
+  </script>
 </body>
 </html>
