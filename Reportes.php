@@ -57,54 +57,140 @@ $finanzas = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>Reportes del Taller</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h2 { color: #2c3e50; }
-        table { border-collapse: collapse; width: 60%; margin: 15px 0; }
-        th, td { border: 1px solid black; padding: 6px; text-align: center; }
-        th { background-color: #eee; }
+        /* Fondo general */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            text-align: center;
+        }
+
+        /* Enlace volver */
+        .volver {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: #444;
+            color: #f0f0f0;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .volver:hover {
+            background-color: #666;
+        }
+
+        /* Logo */
+        .logo {
+            width: 100px;
+            margin: 10px auto 20px;
+            display: block;
+        }
+
+        /* Encabezados */
+        h2, h3 {
+            color: #f7cbcb;
+            text-shadow: 
+                -1px -1px 0 #ff3b3b,
+                 1px -1px 0 #ff3b3b,
+                -1px  1px 0 #ff3b3b,
+                 1px  1px 0 #ff3b3b;
+        }
+
+        /* Contenedor principal */
+        .panel {
+            background-color: #2a2a2a;
+            width: 85%;
+            max-width: 800px;
+            margin: auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+        }
+
+        /* Tablas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0 35px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+        th {
+            background-color: #ff3b3b;
+            color: white;
+        }
+        tr:hover {
+            background-color: #333;
+        }
+
+        /* Párrafos de datos */
+        p {
+            margin: 8px 0;
+            color: #ddd;
+        }
+
     </style>
 </head>
 <body>
-    <h2>📊 Reportes del Taller</h2>
+    <!-- Volver -->
+    <a href="Admin.php" class="volver">⬅ Volver al Panel Admin</a>
 
-    <!-- Reporte de historial -->
-    <h3>Historial de Reparaciones</h3>
-    <p>Total reparaciones: <b><?= $totalReparaciones['TotalReparaciones'] ?></b></p>
-    <table>
-        <tr><th>Servicio</th><th>Cantidad</th></tr>
-        <?php foreach ($serviciosMas as $s): ?>
-            <tr>
-                <td><?= $s['Servicio'] ?></td>
-                <td><?= $s['Cantidad'] ?></td>
-            </tr>
-        <?php endforeach; ?>
-    </table>
+    <!-- Logo -->
+    <img src="logo.png" alt="Logo Auto Parts" class="logo">
 
-    <!-- Reporte de facturación -->
-    <h3>Facturación</h3>
-    <p>Total facturas: <b><?= $facturacion['TotalFacturas'] ?></b></p>
-    <p>Ingresos totales: <b>$<?= $facturacion['IngresosTotales'] ?></b></p>
-    <p>Facturas pendientes: <b><?= $pendientes['Pendientes'] ?></b></p>
+    <div class="panel">
+        <h2>Reportes del Taller</h2>
 
-    <!-- Reporte de repuestos -->
-    <h3>Piezas de Repuesto</h3>
-    <p>Total tipos de repuestos: <b><?= $repuestos['TotalRepuestos'] ?></b></p>
-    <p>Stock total: <b><?= $repuestos['StockTotal'] ?></b></p>
-    <table>
-        <tr><th>Pieza</th><th>Veces Usada</th></tr>
-        <?php foreach ($piezasMas as $p): ?>
-            <tr>
-                <td><?= $p['PiezasUsadas'] ?></td>
-                <td><?= $p['VecesUsada'] ?></td>
-            </tr>
-        <?php endforeach; ?>
-    </table>
+        <!-- Reporte de historial -->
+        <h3>Historial de Reparaciones</h3>
+        <p>Total reparaciones: <b><?= $totalReparaciones['TotalReparaciones'] ?></b></p>
+        <table>
+            <tr><th>Servicio</th><th>Cantidad</th></tr>
+            <?php foreach ($serviciosMas as $s): ?>
+                <tr>
+                    <td><?= $s['Servicio'] ?></td>
+                    <td><?= $s['Cantidad'] ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
 
-    <!-- Finanzas -->
-    <h3>Finanzas</h3>
-    <p>Promedio por factura pagada: <b>$<?= number_format($finanzas['PromedioFactura'], 2) ?></b></p>
-    <div style="text-align:center;">
-        <a href="Admin.php">⬅ Volver al Panel Admin</a>
+        <!-- Reporte de facturación -->
+        <h3>Facturación</h3>
+        <p>Total facturas: <b><?= $facturacion['TotalFacturas'] ?></b></p>
+        <p>Ingresos totales: <b>$<?= $facturacion['IngresosTotales'] ?></b></p>
+        <p>Facturas pendientes: <b><?= $pendientes['Pendientes'] ?></b></p>
+
+        <!-- Reporte de repuestos -->
+        <h3>Piezas de Repuesto</h3>
+        <p>Total tipos de repuestos: <b><?= $repuestos['TotalRepuestos'] ?></b></p>
+        <p>Stock total: <b><?= $repuestos['StockTotal'] ?></b></p>
+        <table>
+            <tr><th>Pieza</th><th>Veces Usada</th></tr>
+            <?php foreach ($piezasMas as $p): ?>
+                <tr>
+                    <td><?= $p['PiezasUsadas'] ?></td>
+                    <td><?= $p['VecesUsada'] ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+
+        <!-- Finanzas -->
+        <h3>Finanzas</h3>
+        <p>Promedio por factura pagada: 
+            <b>$<?= number_format($finanzas['PromedioFactura'], 2) ?></b>
+        </p>
     </div>
 </body>
 </html>
+
+
