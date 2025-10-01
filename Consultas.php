@@ -45,18 +45,132 @@ $repuestos = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>Consultas Rápidas</title>
     <style>
-        table { border-collapse: collapse; width: 100%; margin: 15px 0; }
-        th, td { border: 1px solid black; padding: 6px; text-align: center; }
-        th { background-color: #eee; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            text-align: center;
+        }
+
+        /* Enlace volver */
+        .volver {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: #444;
+            color: #f0f0f0;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .volver:hover {
+            background-color: #666;
+        }
+
+        .logo {
+            width: 120px;
+            margin: 10px auto 20px;
+            display: block;
+        }
+
+        h2, h3 {
+            color: #f7cbcb;
+            text-align: center;
+            text-shadow: 
+                -1px -1px 0 #ff3b3b,
+                 1px -1px 0 #ff3b3b,
+                -1px  1px 0 #ff3b3b,
+                 1px  1px 0 #ff3b3b;
+        }
+
+        h3 {
+            margin-top: 35px;
+        }
+
+        form {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 12px;
+            max-width: 500px;
+            margin: 20px auto;
+            box-shadow: 0 0 12px rgba(0,0,0,0.5);
+            text-align: left;
+        }
+
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #1e1e1e;
+            color: #fff;
+            width: 200px;
+        }
+
+        button {
+            background-color: #ff3b3b;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            margin-left: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #cc2e2e;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 90%;              /* más reducido */
+            margin: 35px auto;       /* más separación arriba/abajo y centrado */
+            background-color: #2a2a2a;
+            border-collapse: collapse;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+
+        th, td {
+            padding: 8px 10px;
+            border: 1px solid #444;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #ff3b3b;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #3a3a3a;
+        }
     </style>
 </head>
 <body>
+    <!-- Volver -->
+    <a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
+
+    <!-- Logo -->
+    <img src="logo.png" alt="Logo Auto Parts" class="logo">
+
     <h2>Consultas Rápidas</h2>
 
     <!-- 🔍 Buscar historial de un vehículo -->
     <h3>Historial de Vehículo</h3>
     <form method="POST">
-        <label>Placa: </label>
+        <label>Placa:</label>
         <input type="text" name="placa" required>
         <button type="submit" name="buscar_historial">Buscar</button>
     </form>
@@ -143,8 +257,5 @@ $repuestos = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             </tr>
         <?php endforeach; ?>
     </table>
-    <div style="text-align:center;">
-        <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
-    </div>
 </body>
 </html>
