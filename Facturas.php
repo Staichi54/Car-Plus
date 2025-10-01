@@ -77,13 +77,123 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>Facturación Automática</title>
     <style>
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid black; padding: 8px; text-align: center; }
-        th { background-color: #f2f2f2; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            text-align: center;
+        }
+
+        /* Enlace volver */
+        .volver {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: #444;
+            color: #f0f0f0;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .volver:hover {
+            background-color: #666;
+        }
+
+        .logo {
+            width: 120px;
+            margin: 10px auto 20px;
+            display: block;
+        }
+
+        h2, h3 {
+            color: #f7cbcb;
+            text-align: center;
+            text-shadow: 
+                -1px -1px 0 #ff3b3b,
+                 1px -1px 0 #ff3b3b,
+                -1px  1px 0 #ff3b3b,
+                 1px  1px 0 #ff3b3b;
+        }
+
+        form {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.6);
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #555;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+
+        button {
+            background-color: #ff3b3b;
+            color: #fff;
+            border: none;
+            padding: 10px 14px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #cc2e2e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background-color: #2a2a2a;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #444;
+            text-align: center;
+        }
+
+        th {
+            background-color: #ff3b3b;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #3a3a3a;
+        }
     </style>
 </head>
 <body>
-    <h2>💳 Facturación Automática</h2>
+    <!-- Volver -->
+    <a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
+
+    <!-- Logo -->
+    <img src="logo.png" alt="Logo Auto Parts" class="logo">
+
+    <h2> Facturación Automática</h2>
 
     <!-- Formulario -->
     <form method="POST">
@@ -93,7 +203,7 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <?php foreach ($presupuestos as $p): ?>
                 <option value="<?= $p['IdPresupuesto'] ?>">#<?= $p['IdPresupuesto'] ?> - Total: <?= $p['Total'] ?></option>
             <?php endforeach; ?>
-        </select><br><br>
+        </select>
 
         <label>Reparación: </label>
         <select name="idHistorial">
@@ -101,19 +211,19 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <?php foreach ($reparaciones as $r): ?>
                 <option value="<?= $r['IdHistorial'] ?>">#<?= $r['IdHistorial'] ?> - <?= $r['Servicio'] ?> (<?= $r['FechaReparacion'] ?>)</option>
             <?php endforeach; ?>
-        </select><br><br>
+        </select>
 
         <label>Estado: </label>
         <select name="estado">
             <option value="Pagada">Pagada</option>
             <option value="Pendiente">Pendiente</option>
-        </select><br><br>
+        </select>
 
         <button type="submit" name="emitir">➕ Emitir Factura</button>
     </form>
 
     <!-- Tabla de facturas -->
-    <h3>📑 Listado de Facturas</h3>
+    <h3> Listado de Facturas</h3>
     <table>
         <tr>
             <th>ID Factura</th>
@@ -141,8 +251,10 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </tr>
         <?php endforeach; ?>
     </table>
-    <div style="text-align:center;">
-        <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
+</body>
+</html>
+
     </div>
 </body>
 </html>
+
