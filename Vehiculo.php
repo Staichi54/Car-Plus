@@ -91,51 +91,66 @@ $stmt = sqlsrv_query($conn, $sql);
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Gestión de Vehículos</title>
-    <style>
-        table {border-collapse: collapse; width: 100%; margin-top: 20px; cursor: pointer;}
-        th, td {border: 1px solid black; padding: 8px; text-align: left;}
-        form {margin: 20px 0;}
-        .btn {padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer;}
-        .btn-green {background: #28a745; color: white;}
-        .btn-red {background: #dc3545; color: white;}
-    </style>
+<meta charset="UTF-8">
+<title>Gestión de Vehículos</title>
+<style>
+    body { font-family: Arial, sans-serif; background:#1e1e1e; color:#f0f0f0; margin:0; }
+    h2 { text-align:center; color:#f7cbcb; margin:20px 0; text-shadow:-1px -1px 0 #ff3b3b,1px -1px 0 #ff3b3b,-1px 1px 0 #ff3b3b,1px 1px 0 #ff3b3b; }
+    form {
+        width:90%; max-width:900px; margin:20px auto; padding:20px;
+        border-radius:10px; background:#2a2a2a; box-shadow:0 0 12px rgba(0,0,0,0.6);
+        text-align:center;
+    }
+    input, textarea { margin:6px; padding:8px; width:200px; border:none; border-radius:6px; background:#3b3b3b; color:#f0f0f0; }
+    input:focus, textarea:focus { outline:none; border:1px solid #ff3b3b; background:#444; }
+    .btn { display:inline-block; margin:8px 5px; padding:10px 16px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; transition:0.3s ease; }
+    .btn-primary { background:#ff3b3b; color:#fff; }
+    .btn-primary:hover { background:#cc2e2e; transform:translateY(-2px); }
+    .btn-danger { background:#444; color:#f0f0f0; }
+    .btn-danger:hover { background:#666; }
+    .btn-cancel { background:#777; color:#fff; text-decoration:none; padding:10px 16px; border-radius:8px; }
+    .btn-cancel:hover { background:#999; }
+    table { border-collapse:collapse; width:95%; margin:20px auto; background:#2a2a2a; border-radius:10px; overflow:hidden; box-shadow:0 0 12px rgba(0,0,0,0.6); }
+    th, td { border:1px solid #444; padding:10px; text-align:center; }
+    th { background:#ff3b3b; color:#fff; }
+    tr { cursor:pointer; transition:background 0.3s ease; }
+    tr:hover { background:#3b3b3b; }
+    .msg { text-align:center; font-weight:bold; color:#6df76d; }
+    .volver { position:absolute; top:15px; left:20px; background:#444; color:#f0f0f0; padding:8px 12px; border-radius:8px; font-weight:bold; text-decoration:none; }
+    .volver:hover { background:#666; }
+</style>
 </head>
 <body>
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2>Gestión de Vehículos</h2>
-    <a href="Vendedor.php" style="text-decoration:none; background:#007bff; color:white; padding:10px 15px; border-radius:5px;">
-        Volver al panel
-    </a>
-</div>
+<a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
+<h2>Gestión de Vehículos</h2>
 
-<p><?php echo $mensaje; ?></p>
+<?php if (!empty($mensaje)) echo "<p class='msg'>$mensaje</p>"; ?>
 
-<h3 id="form-title">Registrar Vehículo y Propietario</h3>
+<h3 id="form-title" style="text-align:center;">Registrar Vehículo y Propietario</h3>
+
 <form method="POST" id="vehiculoForm">
     <input type="hidden" name="idVehiculo" id="idVehiculo">
     
-    <label>Nombre: <input type="text" name="nombre_persona" id="nombre_persona" required></label>
-    <label>Cédula: <input type="text" name="cedula_persona" id="cedula_persona" required></label>
-    <label>Correo: <input type="email" name="correo_persona" id="correo_persona" required></label>
-    <label>Teléfono: <input type="text" name="telefono_persona" id="telefono_persona" required></label><br><br>
+    <input type="text" name="nombre_persona" id="nombre_persona" placeholder="Nombre Propietario" required>
+    <input type="text" name="cedula_persona" id="cedula_persona" placeholder="Cédula" required>
+    <input type="email" name="correo_persona" id="correo_persona" placeholder="Correo" required>
+    <input type="text" name="telefono_persona" id="telefono_persona" placeholder="Teléfono" required><br>
 
-    <label>Placa: <input type="text" name="placa" id="placa" required></label>
-    <label>Marca: <input type="text" name="marca" id="marca" required></label>
-    <label>Modelo: <input type="text" name="modelo" id="modelo" required></label>
-    <label>Año: <input type="number" name="anio" id="anio" required></label>
-    <label>Color: <input type="text" name="color" id="color" required></label><br><br>
+    <input type="text" name="placa" id="placa" placeholder="Placa" required>
+    <input type="text" name="marca" id="marca" placeholder="Marca" required>
+    <input type="text" name="modelo" id="modelo" placeholder="Modelo" required>
+    <input type="number" name="anio" id="anio" placeholder="Año" required>
+    <input type="text" name="color" id="color" placeholder="Color" required><br>
 
-    <label>Chasis: <input type="text" name="chasis" id="chasis" required></label>
-    <label>Motor: <input type="text" name="motor" id="motor" required></label>
-    <label>Observaciones: <input type="text" name="observaciones" id="observaciones"></label><br><br>
+    <input type="text" name="chasis" id="chasis" placeholder="N° Chasis" required>
+    <input type="text" name="motor" id="motor" placeholder="N° Motor" required>
+    <textarea name="observaciones" id="observaciones" placeholder="Observaciones" rows="2"></textarea><br>
 
-    <button type="submit" name="guardar" id="guardarBtn" class="btn btn-green">Guardar</button>
+    <button type="submit" name="guardar" id="guardarBtn" class="btn btn-primary">Guardar</button>
 </form>
 
-<h3>Lista de Vehículos</h3>
+<h3 style="text-align:center;">Lista de Vehículos</h3>
 <table id="tablaVehiculos">
     <tr>
         <th>ID</th><th>Placa</th><th>Marca</th><th>Modelo</th><th>Año</th><th>Color</th>
@@ -160,7 +175,7 @@ $stmt = sqlsrv_query($conn, $sql);
             <td>
                 <form method="POST" style="display:inline;">
                     <input type="hidden" name="idVehiculo" value="<?php echo $row['IdVehiculo']; ?>">
-                    <button type="submit" name="eliminar" class="btn btn-red">Eliminar</button>
+                    <button type="submit" name="eliminar" class="btn btn-danger">Eliminar</button>
                 </form>
             </td>
         </tr>
@@ -187,7 +202,7 @@ function cargarDatos(data) {
     document.getElementById("observaciones").value = data.Observaciones;
 
     let btn = document.getElementById("guardarBtn");
-    btn.innerText = "Actualizar";
+    btn.innerText = "Actualizar Vehículo";
     btn.name = "editar";
 }
 </script>
