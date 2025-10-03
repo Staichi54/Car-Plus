@@ -101,12 +101,15 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "admin") {
     <h1>Bienvenido <?php echo $_SESSION["usuario"]; ?> al panel Admin</h1>
     <p>Selecciona tu opción:</p>
 
+    <a href="Usuarios.php" class="btn">Ver o Crear Usuarios</a>
+
     <a href="Reportes.php" class="btn">Ver Reportes</a>
 
     <a href="Logout.php" class="btn btn-logout">Cerrar Sesión</a>
   </div>
 </body>
 </html>
+
 
 
 
