@@ -171,6 +171,10 @@ $stmt = sqlsrv_query($conn, $sql);
 
 <h2>Gestión de Vehículos</h2>
 
+    <a href="Vendedor.php" style="text-decoration:none; background:#28a745; color:white; padding:10px 15px; border-radius:5px;">
+        Volver
+    </a>
+
 <?php if ($mensaje): ?>
     <div class="msg"><?php echo $mensaje; ?></div>
 <?php endif; ?>
@@ -229,6 +233,8 @@ $stmt = sqlsrv_query($conn, $sql);
         </tr>
     <?php } ?>
 </table>
+<body>
 
 </body>
 </html>
+
