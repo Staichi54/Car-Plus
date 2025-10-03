@@ -1,218 +1,166 @@
 <?php
-// Conexión a la BD
-$serverName = "db28471.public.databaseasp.net";
-$database = "db28471";
-$username = "db28471";
-$password = "2Fb%y9-EH_z7";
-
-try {
-    $conn = new PDO("sqlsrv:Server=$serverName;Database=$database", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    die("Error de conexión: " . $e->getMessage());
+// Conexión a SQL Server
+$serverName = "db28471.public.databaseasp.net"; 
+$connectionOptions = [
+    "Database" => "db28471",
+    "Uid" => "db28471",
+    "PWD" => "2Fb%y9-EH_z7",
+    "CharacterSet" => "UTF-8"
+];
+$conn = sqlsrv_connect($serverName, $connectionOptions);
+if (!$conn) {
+    die("❌ Error de conexión: " . print_r(sqlsrv_errors(), true));
 }
 
-// --- Capturar la placa si existe ---
-$placa = isset($_GET['placa']) ? trim($_GET['placa']) : "";
-
-// Condición dinámica para SQL
-$condicion = "";
-if ($placa !== "") {
-    $condicion = "WHERE Placa = :placa";
+// Función auxiliar: obtener IdVehiculo desde Placa
+function getIdVehiculo($conn, $placa) {
+    $sql = "SELECT IdVehiculo FROM Vehiculos WHERE Placa = ?";
+    $stmt = sqlsrv_query($conn, $sql, [$placa]);
+    if ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+        return $row['IdVehiculo'];
+    }
+    return null;
 }
 
-// --- Reporte de historial ---
-$sql = "SELECT COUNT(*) AS TotalReparaciones 
-        FROM HistorialReparaciones $condicion";
-$stmt = $conn->prepare($sql);
-if ($placa !== "") $stmt->bindParam(":placa", $placa);
-$stmt->execute();
-$totalReparaciones = $stmt->fetch(PDO::FETCH_ASSOC);
+// ---------- CRUD ----------
 
-$sql = "SELECT TOP 5 Servicio, COUNT(*) AS Cantidad 
-        FROM HistorialReparaciones 
-        " . ($placa !== "" ? "WHERE Placa = :placa" : "") . "
-        GROUP BY Servicio 
-        ORDER BY Cantidad DESC";
-$stmt = $conn->prepare($sql);
-if ($placa !== "") $stmt->bindParam(":placa", $placa);
-$stmt->execute();
-$serviciosMas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Agregar cita
+if (isset($_POST["agregar"])) {
+    $placa = $_POST["placa"];
+    $idVehiculo = getIdVehiculo($conn, $placa);
 
-// --- Reporte de facturación ---
-$sql = "SELECT COUNT(*) AS TotalFacturas, SUM(Total) AS IngresosTotales 
-        FROM Facturas 
-        " . ($placa !== "" ? "WHERE Placa = :placa" : "");
-$stmt = $conn->prepare($sql);
-if ($placa !== "") $stmt->bindParam(":placa", $placa);
-$stmt->execute();
-$facturacion = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($idVehiculo) {
+        $fechaInput = $_POST["fecha"];
+        $fechaObj = DateTime::createFromFormat('Y-m-d\TH:i', $fechaInput);
+        $fecha = $fechaObj ? $fechaObj->format('Y-m-d H:i:s') : null;
+        $servicio = $_POST["servicio"];
+        $estado = $_POST["estado"];
+        $obs = $_POST["observaciones"];
 
-$sql = "SELECT COUNT(*) AS Pendientes 
-        FROM Facturas 
-        WHERE Estado = 'Pendiente' " . ($placa !== "" ? "AND Placa = :placa" : "");
-$stmt = $conn->prepare($sql);
-if ($placa !== "") $stmt->bindParam(":placa", $placa);
-$stmt->execute();
-$pendientes = $stmt->fetch(PDO::FETCH_ASSOC);
+        $sql = "INSERT INTO Citas (IdVehiculo, FechaCita, Servicio, Estado, Observaciones) VALUES (?, ?, ?, ?, ?)";
+        $params = [$idVehiculo, [$fecha, SQLSRV_PARAM_IN, null, SQLSRV_SQLTYPE_DATETIME], $servicio, $estado, $obs];
+        sqlsrv_query($conn, $sql, $params) or die(print_r(sqlsrv_errors(), true));
+    } else {
+        echo "❌ No se encontró un vehículo con la placa: $placa";
+    }
+}
 
-// --- Reporte de repuestos ---
-$sql = "SELECT COUNT(*) AS TotalRepuestos, SUM(Cantidad) AS StockTotal 
-        FROM Repuestos";
-$repuestos = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
+// Modificar cita
+if (isset($_POST["modificar"])) {
+    $idCita = $_POST["idCita"];
+    $placa = $_POST["placa"];
+    $idVehiculo = getIdVehiculo($conn, $placa);
 
-$sql = "SELECT TOP 5 PiezasUsadas, COUNT(*) AS VecesUsada 
-        FROM HistorialReparaciones 
-        WHERE PiezasUsadas IS NOT NULL AND PiezasUsadas <> '' 
-        " . ($placa !== "" ? "AND Placa = :placa" : "") . "
-        GROUP BY PiezasUsadas 
-        ORDER BY VecesUsada DESC";
-$stmt = $conn->prepare($sql);
-if ($placa !== "") $stmt->bindParam(":placa", $placa);
-$stmt->execute();
-$piezasMas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($idVehiculo) {
+        $fechaInput = $_POST["fecha"];
+        $fechaObj = DateTime::createFromFormat('Y-m-d\TH:i', $fechaInput);
+        $fecha = $fechaObj ? $fechaObj->format('Y-m-d H:i:s') : null;
+        $servicio = $_POST["servicio"];
+        $estado = $_POST["estado"];
+        $obs = $_POST["observaciones"];
 
-// --- Finanzas (promedios) ---
-$sql = "SELECT AVG(Total) AS PromedioFactura 
-        FROM Facturas 
-        WHERE Estado = 'Pagada' " . ($placa !== "" ? "AND Placa = :placa" : "");
-$stmt = $conn->prepare($sql);
-if ($placa !== "") $stmt->bindParam(":placa", $placa);
-$stmt->execute();
-$finanzas = $stmt->fetch(PDO::FETCH_ASSOC);
+        $sql = "UPDATE Citas SET IdVehiculo=?, FechaCita=?, Servicio=?, Estado=?, Observaciones=? WHERE IdCita=?";
+        $params = [$idVehiculo, [$fecha, SQLSRV_PARAM_IN, null, SQLSRV_SQLTYPE_DATETIME], $servicio, $estado, $obs, $idCita];
+        sqlsrv_query($conn, $sql, $params) or die(print_r(sqlsrv_errors(), true));
+    } else {
+        echo "❌ No se encontró un vehículo con la placa: $placa";
+    }
+}
+
+// Eliminar cita
+if (isset($_POST["eliminar"])) {
+    $idCita = $_POST["idCita"];
+    $sql = "DELETE FROM Citas WHERE IdCita=?";
+    $params = [$idCita];
+    sqlsrv_query($conn, $sql, $params) or die(print_r(sqlsrv_errors(), true));
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reportes del Taller</title>
+    <title>Gestión de Citas</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #1e1e1e;
-            color: #f0f0f0;
-            text-align: center;
-        }
-        .volver {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            background-color: #444;
-            color: #f0f0f0;
-            text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .volver:hover { background-color: #666; }
-        .logo { width: 100px; margin: 10px auto 20px; display: block; }
-        h2, h3 {
-            color: #f7cbcb;
-            text-shadow: -1px -1px 0 #ff3b3b,1px -1px 0 #ff3b3b,
-                         -1px  1px 0 #ff3b3b,1px  1px 0 #ff3b3b;
-        }
-        .panel {
-            background-color: #2a2a2a;
-            width: 85%;
-            max-width: 800px;
-            margin: auto;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.6);
-        }
-        table {
-            width: 100%; border-collapse: collapse; margin: 20px 0 35px;
-            background-color: #1e1e1e; border-radius: 8px; overflow: hidden;
-        }
-        th, td { padding: 10px; border: 1px solid #444; text-align: center; }
-        th { background-color: #ff3b3b; color: white; }
-        tr:hover { background-color: #333; }
-        p { margin: 8px 0; color: #ddd; }
-        .form-placa {
-            margin: 20px auto;
-            text-align: center;
-        }
-        input[type="text"] {
-            padding: 6px;
-            border-radius: 6px;
-            border: none;
-            outline: none;
-            width: 180px;
-            text-align: center;
-        }
-        button {
-            padding: 6px 12px;
-            margin-left: 5px;
-            border: none;
-            border-radius: 6px;
-            background: #ff3b3b;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        button:hover { background: #cc2e2e; }
+        table, th, td { border: 1px solid black; border-collapse: collapse; padding: 8px; }
+        tr:hover { background-color: #f2f2f2; cursor: pointer; }
     </style>
 </head>
 <body>
-    <a href="Admin.php" class="volver">⬅ Volver al Panel Admin</a>
-    <img src="logo.png" alt="Logo Auto Parts" class="logo">
+    <h1>Gestión de Citas</h1>
 
-    <div class="panel">
-        <h2>Reportes del Taller</h2>
+    <!-- Formulario -->
+    <form method="post">
+        <input type="hidden" name="idCita" id="idCita">
 
-        <!-- Formulario búsqueda -->
-        <form method="GET" class="form-placa">
-            <label for="placa">Buscar por placa:</label>
-            <input type="text" name="placa" id="placa" value="<?= htmlspecialchars($placa) ?>" placeholder="Ej: ABC123">
-            <button type="submit">Buscar</button>
-            <a href="reportes.php"><button type="button">Ver General</button></a>
-        </form>
+        <label>Placa:</label>
+        <input type="text" name="placa" id="placa" required><br><br>
 
-        <?php if ($placa !== ""): ?>
-            <h3>📌 Reporte filtrado por placa: <b><?= htmlspecialchars($placa) ?></b></h3>
-        <?php endif; ?>
+        <label>Fecha:</label>
+        <input type="datetime-local" name="fecha" id="fecha" required><br><br>
 
-        <!-- Reporte de historial -->
-        <h3>Historial de Reparaciones</h3>
-        <p>Total reparaciones: <b><?= $totalReparaciones['TotalReparaciones'] ?></b></p>
-        <table>
-            <tr><th>Servicio</th><th>Cantidad</th></tr>
-            <?php foreach ($serviciosMas as $s): ?>
-                <tr>
-                    <td><?= $s['Servicio'] ?></td>
-                    <td><?= $s['Cantidad'] ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </table>
+        <label>Servicio:</label>
+        <input type="text" name="servicio" id="servicio" required><br><br>
 
-        <!-- Reporte de facturación -->
-        <h3>Facturación</h3>
-        <p>Total facturas: <b><?= $facturacion['TotalFacturas'] ?></b></p>
-        <p>Ingresos totales: <b>$<?= $facturacion['IngresosTotales'] ?></b></p>
-        <p>Facturas pendientes: <b><?= $pendientes['Pendientes'] ?></b></p>
+        <label>Estado:</label>
+        <input type="text" name="estado" id="estado" required><br><br>
 
-        <!-- Reporte de repuestos -->
-        <h3>Piezas de Repuesto</h3>
-        <p>Total tipos de repuestos: <b><?= $repuestos['TotalRepuestos'] ?></b></p>
-        <p>Stock total: <b><?= $repuestos['StockTotal'] ?></b></p>
-        <table>
-            <tr><th>Pieza</th><th>Veces Usada</th></tr>
-            <?php foreach ($piezasMas as $p): ?>
-                <tr>
-                    <td><?= $p['PiezasUsadas'] ?></td>
-                    <td><?= $p['VecesUsada'] ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </table>
+        <label>Observaciones:</label>
+        <input type="text" name="observaciones" id="observaciones"><br><br>
 
-        <!-- Finanzas -->
-        <h3>Finanzas</h3>
-        <p>Promedio por factura pagada: 
-            <b>$<?= number_format($finanzas['PromedioFactura'], 2) ?></b>
-        </p>
-    </div>
+        <button type="submit" name="agregar">Agregar</button>
+        <button type="submit" name="modificar">Modificar</button>
+        <button type="submit" name="eliminar">Eliminar</button>
+    </form>
+
+    <hr>
+
+    <!-- Tabla de citas -->
+    <h2>Listado de Citas</h2>
+    <table>
+        <tr>
+            <th>ID Cita</th>
+            <th>Placa</th>
+            <th>Fecha</th>
+            <th>Servicio</th>
+            <th>Estado</th>
+            <th>Observaciones</th>
+        </tr>
+        <?php
+        $sql = "SELECT c.IdCita, v.Placa, c.FechaCita, c.Servicio, c.Estado, c.Observaciones
+                FROM Citas c
+                INNER JOIN Vehiculos v ON c.IdVehiculo = v.IdVehiculo
+                ORDER BY c.FechaCita DESC";
+        $result = sqlsrv_query($conn, $sql);
+        while ($row = sqlsrv_fetch_array($result, SQLSRV_FETCH_ASSOC)) {
+            $fechaInput = $row['FechaCita'] ? date_format($row['FechaCita'], 'Y-m-d\TH:i') : "";
+            $fechaMostrar = $row['FechaCita'] ? date_format($row['FechaCita'], 'Y-m-d H:i') : "";
+            echo "<tr onclick=\"cargarCita('{$row['IdCita']}', '{$row['Placa']}', '{$fechaInput}', '{$row['Servicio']}', '{$row['Estado']}', '{$row['Observaciones']}')\">";
+            echo "<td>".$row['IdCita']."</td>";
+            echo "<td>".$row['Placa']."</td>";
+            echo "<td>".$fechaMostrar."</td>";
+            echo "<td>".$row['Servicio']."</td>";
+            echo "<td>".$row['Estado']."</td>";
+            echo "<td>".$row['Observaciones']."</td>";
+            echo "</tr>";
+        }
+        ?>
+    </table>
+
+    <!-- Script JS -->
+    <script>
+    function cargarCita(id, placa, fecha, servicio, estado, obs) {
+        document.getElementById("idCita").value = id;
+        document.getElementById("placa").value = placa;
+        document.getElementById("fecha").value = fecha;
+        document.getElementById("servicio").value = servicio;
+        document.getElementById("estado").value = estado;
+        document.getElementById("observaciones").value = obs;
+    }
+    </script>
+
+    <div style="text-align:center;">
+        <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
+    </div>  
 </body>
 </html>
