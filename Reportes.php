@@ -12,25 +12,44 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
+// Capturar placa seleccionada (si existe)
+$placa = isset($_GET['placa']) && $_GET['placa'] !== "" ? $_GET['placa'] : null;
+
+// Condición SQL (si hay placa o no)
+$where = $placa ? " WHERE Placa = :placa " : "";
+
 // --- Reporte de historial ---
-$sql = "SELECT COUNT(*) AS TotalReparaciones FROM HistorialReparaciones";
-$totalReparaciones = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
+$sql = "SELECT COUNT(*) AS TotalReparaciones FROM HistorialReparaciones $where";
+$stmt = $conn->prepare($sql);
+if ($placa) $stmt->bindParam(':placa', $placa);
+$stmt->execute();
+$totalReparaciones = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $sql = "SELECT TOP 5 Servicio, COUNT(*) AS Cantidad 
         FROM HistorialReparaciones 
+        $where
         GROUP BY Servicio 
         ORDER BY Cantidad DESC";
-$serviciosMas = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+$stmt = $conn->prepare($sql);
+if ($placa) $stmt->bindParam(':placa', $placa);
+$stmt->execute();
+$serviciosMas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // --- Reporte de facturación ---
 $sql = "SELECT COUNT(*) AS TotalFacturas, SUM(Total) AS IngresosTotales 
-        FROM Facturas";
-$facturacion = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
+        FROM Facturas $where";
+$stmt = $conn->prepare($sql);
+if ($placa) $stmt->bindParam(':placa', $placa);
+$stmt->execute();
+$facturacion = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $sql = "SELECT COUNT(*) AS Pendientes 
         FROM Facturas 
-        WHERE Estado = 'Pendiente'";
-$pendientes = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
+        $where " . ($where ? "AND Estado = 'Pendiente'" : "WHERE Estado = 'Pendiente'");
+$stmt = $conn->prepare($sql);
+if ($placa) $stmt->bindParam(':placa', $placa);
+$stmt->execute();
+$pendientes = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // --- Reporte de repuestos ---
 $sql = "SELECT COUNT(*) AS TotalRepuestos, SUM(Cantidad) AS StockTotal 
@@ -39,16 +58,23 @@ $repuestos = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
 
 $sql = "SELECT TOP 5 PiezasUsadas, COUNT(*) AS VecesUsada 
         FROM HistorialReparaciones 
-        WHERE PiezasUsadas IS NOT NULL AND PiezasUsadas <> '' 
+        WHERE (PiezasUsadas IS NOT NULL AND PiezasUsadas <> '')" .
+        ($placa ? " AND Placa = :placa" : "") . "
         GROUP BY PiezasUsadas 
         ORDER BY VecesUsada DESC";
-$piezasMas = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+$stmt = $conn->prepare($sql);
+if ($placa) $stmt->bindParam(':placa', $placa);
+$stmt->execute();
+$piezasMas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// --- Finanzas (promedios) ---
+// --- Finanzas ---
 $sql = "SELECT AVG(Total) AS PromedioFactura 
         FROM Facturas 
-        WHERE Estado = 'Pagada'";
-$finanzas = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
+        WHERE Estado = 'Pagada' " . ($placa ? "AND Placa = :placa" : "");
+$stmt = $conn->prepare($sql);
+if ($placa) $stmt->bindParam(':placa', $placa);
+$stmt->execute();
+$finanzas = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -57,103 +83,36 @@ $finanzas = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
     <meta charset="UTF-8">
     <title>Reportes del Taller</title>
     <style>
-        /* Fondo general */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #1e1e1e;
-            color: #f0f0f0;
-            text-align: center;
-        }
-
-        /* Enlace volver */
-        .volver {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            background-color: #444;
-            color: #f0f0f0;
-            text-decoration: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .volver:hover {
-            background-color: #666;
-        }
-
-        /* Logo */
-        .logo {
-            width: 100px;
-            margin: 10px auto 20px;
-            display: block;
-        }
-
-        /* Encabezados */
-        h2, h3 {
-            color: #f7cbcb;
-            text-shadow: 
-                -1px -1px 0 #ff3b3b,
-                 1px -1px 0 #ff3b3b,
-                -1px  1px 0 #ff3b3b,
-                 1px  1px 0 #ff3b3b;
-        }
-
-        /* Contenedor principal */
-        .panel {
-            background-color: #2a2a2a;
-            width: 85%;
-            max-width: 800px;
-            margin: auto;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.6);
-        }
-
-        /* Tablas */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0 35px;
-            background-color: #1e1e1e;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #444;
-            text-align: center;
-        }
-        th {
-            background-color: #ff3b3b;
-            color: white;
-        }
-        tr:hover {
-            background-color: #333;
-        }
-
-        /* Párrafos de datos */
-        p {
-            margin: 8px 0;
-            color: #ddd;
-        }
-
+        body { font-family: Arial, sans-serif; background:#1e1e1e; color:#f0f0f0; text-align:center; padding:20px;}
+        .panel { background:#2a2a2a; padding:20px; border-radius:10px; width:85%; max-width:900px; margin:auto;}
+        table { width:100%; border-collapse:collapse; margin:20px 0; }
+        th, td { border:1px solid #444; padding:8px; text-align:center;}
+        th { background:#ff3b3b; color:white;}
+        tr:hover { background:#333;}
+        .volver { position:absolute; top:15px; left:20px; background:#444; padding:8px 12px; border-radius:6px; text-decoration:none; color:white;}
+        .volver:hover { background:#666;}
     </style>
 </head>
 <body>
-    <!-- Volver -->
-    <a href="Admin.php" class="volver">⬅ Volver al Panel Admin</a>
-
-    <!-- Logo -->
-    <img src="logo.png" alt="Logo Auto Parts" class="logo">
+    <a href="Admin.php" class="volver">⬅ Volver</a>
 
     <div class="panel">
         <h2>Reportes del Taller</h2>
 
+        <!-- Formulario de búsqueda por placa -->
+        <form method="GET" action="">
+            <input type="text" name="placa" placeholder="Ingrese placa..." value="<?= htmlspecialchars($placa ?? '') ?>">
+            <button type="submit">Buscar</button>
+            <?php if ($placa): ?>
+                <a href="Reportes.php" style="margin-left:10px;color:#ff3b3b;">Quitar filtro</a>
+            <?php endif; ?>
+        </form>
+
+        <h3><?= $placa ? "Reporte del vehículo con placa: $placa" : "Reporte General" ?></h3>
+
         <!-- Reporte de historial -->
         <h3>Historial de Reparaciones</h3>
-        <p>Total reparaciones: <b><?= $totalReparaciones['TotalReparaciones'] ?></b></p>
+        <p>Total reparaciones: <b><?= $totalReparaciones['TotalReparaciones'] ?? 0 ?></b></p>
         <table>
             <tr><th>Servicio</th><th>Cantidad</th></tr>
             <?php foreach ($serviciosMas as $s): ?>
@@ -164,16 +123,16 @@ $finanzas = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
             <?php endforeach; ?>
         </table>
 
-        <!-- Reporte de facturación -->
+        <!-- Facturación -->
         <h3>Facturación</h3>
-        <p>Total facturas: <b><?= $facturacion['TotalFacturas'] ?></b></p>
-        <p>Ingresos totales: <b>$<?= $facturacion['IngresosTotales'] ?></b></p>
-        <p>Facturas pendientes: <b><?= $pendientes['Pendientes'] ?></b></p>
+        <p>Total facturas: <b><?= $facturacion['TotalFacturas'] ?? 0 ?></b></p>
+        <p>Ingresos totales: <b>$<?= $facturacion['IngresosTotales'] ?? 0 ?></b></p>
+        <p>Facturas pendientes: <b><?= $pendientes['Pendientes'] ?? 0 ?></b></p>
 
-        <!-- Reporte de repuestos -->
+        <!-- Repuestos -->
         <h3>Piezas de Repuesto</h3>
-        <p>Total tipos de repuestos: <b><?= $repuestos['TotalRepuestos'] ?></b></p>
-        <p>Stock total: <b><?= $repuestos['StockTotal'] ?></b></p>
+        <p>Total tipos de repuestos: <b><?= $repuestos['TotalRepuestos'] ?? 0 ?></b></p>
+        <p>Stock total: <b><?= $repuestos['StockTotal'] ?? 0 ?></b></p>
         <table>
             <tr><th>Pieza</th><th>Veces Usada</th></tr>
             <?php foreach ($piezasMas as $p): ?>
@@ -186,11 +145,7 @@ $finanzas = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
 
         <!-- Finanzas -->
         <h3>Finanzas</h3>
-        <p>Promedio por factura pagada: 
-            <b>$<?= number_format($finanzas['PromedioFactura'], 2) ?></b>
-        </p>
+        <p>Promedio por factura pagada: <b>$<?= number_format($finanzas['PromedioFactura'] ?? 0, 2) ?></b></p>
     </div>
 </body>
 </html>
-
-
