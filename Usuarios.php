@@ -223,26 +223,30 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
     <tr>
       <th>ID</th>
       <th>Usuario</th>
-      <th>Contraseña</th>
       <th>Correo</th>
       <th>Rol</th>
+      <th>Nueva Contraseña</th>
       <th>Acciones</th>
     </tr>
     <?php while ($row = sqlsrv_fetch_array($usuarios, SQLSRV_FETCH_ASSOC)) { ?>
       <tr>
         <td><?php echo $row["IdUsuario"]; ?></td>
         <td><?php echo $row["Usuario"]; ?></td>
-        <td><?php echo $row["Contrasena"]; ?></td>
         <td><?php echo $row["Correo"]; ?></td>
         <td><?php echo $row["Rol"]; ?></td>
+
+        <!-- Campo nueva contraseña -->
         <td>
-          <!-- Botón Editar -->
           <form method="POST" style="display:inline;">
             <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
+            <input type="password" name="nuevaContrasena" placeholder="Nueva contraseña" required>
+        </td>
+
+        <!-- Botones -->
+        <td>
             <button type="submit" name="editar" class="btn-edit">✏️ Editar</button>
           </form>
 
-          <!-- Botón Eliminar -->
           <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este usuario?');">
             <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
             <button type="submit" name="eliminar" class="btn-delete">🗑️ Eliminar</button>
