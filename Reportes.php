@@ -1,5 +1,7 @@
 <?php
+// =======================
 // Conexión a la BD
+// =======================
 $serverName = "db28471.public.databaseasp.net";
 $database = "db28471";
 $username = "db28471";
@@ -12,65 +14,84 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-// Capturar placa seleccionada (si existe)
+// =======================
+// Capturar filtro de placa
+// =======================
 $placa = isset($_GET['placa']) && $_GET['placa'] !== "" ? $_GET['placa'] : null;
 
-// Condición SQL (si hay placa o no)
-$where = $placa ? " WHERE Placa = :placa " : "";
-
-// --- Reporte de historial ---
-$sql = "SELECT COUNT(*) AS TotalReparaciones FROM HistorialReparaciones $where";
+// =======================
+// Reporte de historial
+// =======================
+$sql = "SELECT COUNT(*) AS TotalReparaciones 
+        FROM HistorialReparaciones h
+        INNER JOIN Vehiculos v ON h.IdVehiculo = v.IdVehiculo
+        " . ($placa ? "WHERE v.Placa = :placa" : "");
 $stmt = $conn->prepare($sql);
 if ($placa) $stmt->bindParam(':placa', $placa);
 $stmt->execute();
 $totalReparaciones = $stmt->fetch(PDO::FETCH_ASSOC);
 
-$sql = "SELECT TOP 5 Servicio, COUNT(*) AS Cantidad 
-        FROM HistorialReparaciones 
-        $where
-        GROUP BY Servicio 
+$sql = "SELECT TOP 5 h.Servicio, COUNT(*) AS Cantidad 
+        FROM HistorialReparaciones h
+        INNER JOIN Vehiculos v ON h.IdVehiculo = v.IdVehiculo
+        " . ($placa ? "WHERE v.Placa = :placa" : "") . "
+        GROUP BY h.Servicio 
         ORDER BY Cantidad DESC";
 $stmt = $conn->prepare($sql);
 if ($placa) $stmt->bindParam(':placa', $placa);
 $stmt->execute();
 $serviciosMas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// --- Reporte de facturación ---
-$sql = "SELECT COUNT(*) AS TotalFacturas, SUM(Total) AS IngresosTotales 
-        FROM Facturas $where";
+// =======================
+// Reporte de facturación
+// =======================
+$sql = "SELECT COUNT(*) AS TotalFacturas, SUM(f.Total) AS IngresosTotales 
+        FROM Facturas f
+        LEFT JOIN Presupuestos p ON f.IdPresupuesto = p.IdPresupuesto
+        LEFT JOIN Vehiculos v ON p.IdVehiculo = v.IdVehiculo
+        " . ($placa ? "WHERE v.Placa = :placa" : "");
 $stmt = $conn->prepare($sql);
 if ($placa) $stmt->bindParam(':placa', $placa);
 $stmt->execute();
 $facturacion = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $sql = "SELECT COUNT(*) AS Pendientes 
-        FROM Facturas 
-        $where " . ($where ? "AND Estado = 'Pendiente'" : "WHERE Estado = 'Pendiente'");
+        FROM Facturas f
+        LEFT JOIN Presupuestos p ON f.IdPresupuesto = p.IdPresupuesto
+        LEFT JOIN Vehiculos v ON p.IdVehiculo = v.IdVehiculo
+        WHERE f.Estado = 'Pendiente' " . ($placa ? "AND v.Placa = :placa" : "");
 $stmt = $conn->prepare($sql);
 if ($placa) $stmt->bindParam(':placa', $placa);
 $stmt->execute();
 $pendientes = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// --- Reporte de repuestos ---
+// =======================
+// Reporte de repuestos
+// =======================
 $sql = "SELECT COUNT(*) AS TotalRepuestos, SUM(Cantidad) AS StockTotal 
         FROM Repuestos";
 $repuestos = $conn->query($sql)->fetch(PDO::FETCH_ASSOC);
 
-$sql = "SELECT TOP 5 PiezasUsadas, COUNT(*) AS VecesUsada 
-        FROM HistorialReparaciones 
-        WHERE (PiezasUsadas IS NOT NULL AND PiezasUsadas <> '')" .
-        ($placa ? " AND Placa = :placa" : "") . "
-        GROUP BY PiezasUsadas 
+$sql = "SELECT TOP 5 h.PiezasUsadas, COUNT(*) AS VecesUsada 
+        FROM HistorialReparaciones h
+        INNER JOIN Vehiculos v ON h.IdVehiculo = v.IdVehiculo
+        WHERE (h.PiezasUsadas IS NOT NULL AND h.PiezasUsadas <> '') 
+        " . ($placa ? "AND v.Placa = :placa" : "") . "
+        GROUP BY h.PiezasUsadas 
         ORDER BY VecesUsada DESC";
 $stmt = $conn->prepare($sql);
 if ($placa) $stmt->bindParam(':placa', $placa);
 $stmt->execute();
 $piezasMas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// --- Finanzas ---
-$sql = "SELECT AVG(Total) AS PromedioFactura 
-        FROM Facturas 
-        WHERE Estado = 'Pagada' " . ($placa ? "AND Placa = :placa" : "");
+// =======================
+// Finanzas
+// =======================
+$sql = "SELECT AVG(f.Total) AS PromedioFactura 
+        FROM Facturas f
+        LEFT JOIN Presupuestos p ON f.IdPresupuesto = p.IdPresupuesto
+        LEFT JOIN Vehiculos v ON p.IdVehiculo = v.IdVehiculo
+        WHERE f.Estado = 'Pagada' " . ($placa ? "AND v.Placa = :placa" : "");
 $stmt = $conn->prepare($sql);
 if ($placa) $stmt->bindParam(':placa', $placa);
 $stmt->execute();
@@ -91,6 +112,9 @@ $finanzas = $stmt->fetch(PDO::FETCH_ASSOC);
         tr:hover { background:#333;}
         .volver { position:absolute; top:15px; left:20px; background:#444; padding:8px 12px; border-radius:6px; text-decoration:none; color:white;}
         .volver:hover { background:#666;}
+        input, button { padding:6px; border-radius:5px; border:1px solid #555; }
+        button { background:#ff3b3b; color:white; cursor:pointer; }
+        button:hover { background:#e52e2e; }
     </style>
 </head>
 <body>
@@ -110,7 +134,7 @@ $finanzas = $stmt->fetch(PDO::FETCH_ASSOC);
 
         <h3><?= $placa ? "Reporte del vehículo con placa: $placa" : "Reporte General" ?></h3>
 
-        <!-- Reporte de historial -->
+        <!-- Historial -->
         <h3>Historial de Reparaciones</h3>
         <p>Total reparaciones: <b><?= $totalReparaciones['TotalReparaciones'] ?? 0 ?></b></p>
         <table>
