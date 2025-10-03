@@ -181,6 +181,7 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
       border: 1px solid #444;
       padding: 10px;
       text-align: center;
+      vertical-align: middle;
     }
 
     th {
@@ -190,6 +191,36 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
 
     tr:hover {
       background: #3b3b3b;
+    }
+
+    /* 🔹 Estilos para las acciones dentro de la tabla */
+    td form {
+      background: transparent !important;
+      box-shadow: none !important;
+      margin: 0;
+      padding: 0;
+      display: inline-flex; /* Alinea en fila */
+      align-items: center;
+      gap: 6px; /* Espacio entre campos y botones */
+      border: none;
+    }
+
+    td form input,
+    td form select {
+      margin: 0;
+      padding: 4px 6px;
+      font-size: 13px;
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    td form button {
+      margin: 0;
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 6px;
     }
   </style>
 </head>
@@ -205,8 +236,9 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
       <h2>➕ Crear Usuario</h2>
       <input type="text" name="usuario" placeholder="Usuario" required>
       <input type="password" name="contrasena" placeholder="Contraseña" required>
-      <input type="text" name="contrasena" placeholder="Contraseña" required> <!-- 🔹 visible -->
+      <input type="password" name="confirmar_contrasena" placeholder="Confirmar Contraseña" required>
       <input type="email" name="correo" placeholder="Correo" required>
+
       <select name="rol" required>
           <option value="admin">Admin</option>
           <option value="vendedor">Vendedor</option>
@@ -217,22 +249,20 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
   <!-- Lista de usuarios -->
   <h2>📋 Usuarios Registrados</h2>
   <table>
-      <tr><th>ID</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr>
       <tr><th>ID</th><th>Usuario</th><th>Contraseña</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr>
       <?php while ($row = sqlsrv_fetch_array($usuarios, SQLSRV_FETCH_ASSOC)) { ?>
           <tr>
               <td><?php echo $row["IdUsuario"]; ?></td>
               <td><?php echo $row["Usuario"]; ?></td>
-              <td><?php echo $row["Contrasena"]; ?></td> <!-- 🔹 mostrada -->
+              <td><?php echo $row["Contrasena"]; ?></td>
               <td><?php echo $row["Correo"]; ?></td>
               <td><?php echo $row["Rol"]; ?></td>
               <td>
                   <!-- Editar -->
-                  <form method="POST" style="display:inline;">
+                  <form method="POST">
                       <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
                       <input type="text" name="usuario" value="<?php echo $row["Usuario"]; ?>" required>
                       <input type="password" name="contrasena" placeholder="Nueva contraseña (opcional)">
-                      <input type="text" name="contrasena" placeholder="Nueva contraseña (opcional)">
                       <input type="email" name="correo" value="<?php echo $row["Correo"]; ?>" required>
                       <select name="rol">
                           <option value="admin" <?php if ($row["Rol"]=="admin") echo "selected"; ?>>Admin</option>
@@ -242,7 +272,7 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
                   </form>
 
                   <!-- Eliminar -->
-                  <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este usuario?');">
+                  <form method="POST" onsubmit="return confirm('¿Eliminar este usuario?');">
                       <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
                       <button type="submit" name="eliminar" class="btn-red">🗑️</button>
                   </form>
@@ -252,3 +282,4 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
   </table>
 </body>
 </html>
+
