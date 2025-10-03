@@ -144,124 +144,244 @@ $lista = sqlsrv_query($conn, "
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Presupuestos</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align:center; }
-        th { background: #6c757d; color: white; }
-        .btn { padding: 6px 12px; background: #007bff; color: white; border: none; cursor: pointer; margin: 3px; }
-        .btn:hover { background: #0056b3; }
-        .btn-red { background: red; }
-        input, select { margin: 5px; padding: 6px; width: 95%; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Gestión de Presupuestos</title>
+  <style>
+    /* Fondo general en modo oscuro */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+      text-align: center;
+    }
+
+    /* Encabezados */
+    h1 {
+      margin: 20px 0 10px;
+      color: #f7cbcb;
+      font-weight: bold;
+      font-size: 28px;
+      text-shadow: 
+        -1px -1px 0 #ff3b3b,
+         1px -1px 0 #ff3b3b,
+        -1px  1px 0 #ff3b3b,
+         1px  1px 0 #ff3b3b;
+    }
+
+    h2, h3 {
+      color: #ff3b3b;
+      margin: 20px 0 10px;
+    }
+
+    /* Logo */
+    .logo {
+      width: 120px;
+      margin: 20px auto;
+      display: block;
+    }
+
+    /* Formularios */
+    form {
+      width: 90%;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: #2a2a2a;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: left;
+      color: #f0f0f0;
+    }
+
+    input, select {
+      margin: 6px 0;
+      padding: 8px;
+      width: 95%;
+      border: none;
+      border-radius: 6px;
+      background: #3b3b3b;
+      color: #f0f0f0;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border: 1px solid #ff3b3b;
+      background: #444;
+    }
+
+    /* Botones */
+    .btn {
+      display: inline-block;
+      margin: 8px 5px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s ease;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .btn-primary { background: #ff3b3b; }
+    .btn-primary:hover { background: #cc2e2e; }
+
+    .btn-view { background: #ffaa2e; }
+    .btn-view:hover { background: #e68a00; }
+
+    /* Tablas */
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: 20px auto;
+      background: #2a2a2a;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+    }
+
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background: #ff3b3b;
+      color: #fff;
+    }
+
+    tr {
+      transition: background 0.3s ease;
+    }
+
+    tr:hover {
+      background: #3b3b3b;
+      cursor: pointer;
+    }
+
+    /* Enlace volver */
+    .volver {
+        position: absolute;
+        top: 15px;
+        left: 20px;
+        background-color: #444;
+        color: #f0f0f0;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: bold;
+    }
+    .volver:hover {
+        background-color: #666;
+    }
+  </style>
 </head>
 <body>
-    <h1>💰 Presupuestos</h1>
+  <!-- Botón volver -->
+  <a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
 
-    <!-- Crear nuevo presupuesto -->
+  <!-- Logo -->
+  <img src="logo.png" alt="Logo Auto Parts" class="logo">
+
+  <h1> Gestión de Presupuestos</h1>
+
+  <!-- Crear nuevo presupuesto -->
+  <form method="POST">
+    <label>Vehículo:</label>
+    <select name="idVehiculo" required>
+      <?php
+      $vehiculos = sqlsrv_query($conn, "SELECT IdVehiculo, Placa FROM Vehiculos");
+      while ($v = sqlsrv_fetch_array($vehiculos, SQLSRV_FETCH_ASSOC)) {
+          echo "<option value='{$v['IdVehiculo']}'>{$v['Placa']}</option>";
+      }
+      ?>
+    </select>
+    <button type="submit" name="crear" class="btn btn-primary">➕ Crear Presupuesto</button>
+  </form>
+
+  <!-- Lista de presupuestos -->
+  <h2> Presupuestos Existentes</h2>
+  <table>
+    <tr>
+      <th>ID</th>
+      <th>Vehículo</th>
+      <th>Fecha</th>
+      <th>Total</th>
+      <th>Estado</th>
+      <th>Acción</th>
+    </tr>
+    <?php while ($row = sqlsrv_fetch_array($lista, SQLSRV_FETCH_ASSOC)) { ?>
+      <tr>
+        <td><?php echo $row["IdPresupuesto"]; ?></td>
+        <td><?php echo $row["Placa"]; ?></td>
+        <td><?php echo $row["FechaPresupuesto"]->format("Y-m-d"); ?></td>
+        <td><?php echo number_format($row["Total"], 2); ?></td>
+        <td><?php echo $row["Estado"]; ?></td>
+        <td><a href="Presupuesto.php?id=<?php echo $row['IdPresupuesto']; ?>" class="btn btn-view">🔍 Ver</a></td>
+      </tr>
+    <?php } ?>
+  </table>
+
+  <?php if ($presupuesto) { ?>
+    <h2>📝 Presupuesto #<?php echo $presupuesto["IdPresupuesto"]; ?> - Vehículo <?php echo $presupuesto["Placa"]; ?></h2>
+    <p>Fecha: <?php echo $presupuesto["FechaPresupuesto"]->format("Y-m-d"); ?> | 
+       Estado: <?php echo $presupuesto["Estado"]; ?> | 
+       Total: <b><?php echo number_format($presupuesto["Total"], 2); ?></b></p>
+
+    <!-- Agregar detalle -->
     <form method="POST">
-        <label>Vehículo:</label><br>
-        <select name="idVehiculo" required>
-            <?php
-            $vehiculos = sqlsrv_query($conn, "SELECT IdVehiculo, Placa FROM Vehiculos");
-            while ($v = sqlsrv_fetch_array($vehiculos, SQLSRV_FETCH_ASSOC)) {
-                echo "<option value='{$v['IdVehiculo']}'>{$v['Placa']}</option>";
-            }
-            ?>
-        </select><br>
-        <button type="submit" name="crear" class="btn">➕ Crear Presupuesto</button>
+      <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
+
+      <label>Tipo:</label>
+      <select name="tipo" required>
+        <option value="Servicio">Servicio</option>
+        <option value="Repuesto">Repuesto</option>
+      </select>
+
+      <label>Descripción:</label>
+      <input type="text" name="descripcion" required>
+
+      <label>Cantidad:</label>
+      <input type="number" name="cantidad" value="1" min="1" required>
+
+      <label>Precio unitario:</label>
+      <input type="number" step="0.01" name="precio" required>
+
+      <button type="submit" name="agregarDetalle" class="btn btn-primary">➕ Agregar</button>
     </form>
 
-    <!-- Lista de presupuestos -->
-    <h2>📋 Presupuestos Existentes</h2>
+    <!-- Detalle del presupuesto -->
+    <h3>Detalle</h3>
     <table>
-        <tr><th>ID</th><th>Vehículo</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
-        <?php while ($row = sqlsrv_fetch_array($lista, SQLSRV_FETCH_ASSOC)) { ?>
-            <tr>
-                <td><?php echo $row["IdPresupuesto"]; ?></td>
-                <td><?php echo $row["Placa"]; ?></td>
-                <td><?php echo $row["FechaPresupuesto"]->format("Y-m-d"); ?></td>
-                <td><?php echo number_format($row["Total"], 2); ?></td>
-                <td><?php echo $row["Estado"]; ?></td>
-                <td>
-                    <a href="Presupuesto.php?id=<?php echo $row['IdPresupuesto']; ?>" class="btn">🔍 Ver</a>
-                    <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar presupuesto?');">
-                        <input type="hidden" name="idPresupuesto" value="<?php echo $row["IdPresupuesto"]; ?>">
-                        <button type="submit" name="eliminarPresupuesto" class="btn btn-red">🗑️</button>
-                    </form>
-                </td>
-            </tr>
-        <?php } ?>
+      <tr>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Descripción</th>
+        <th>Cantidad</th>
+        <th>Precio</th>
+        <th>Subtotal</th>
+      </tr>
+      <?php while ($d = sqlsrv_fetch_array($detalles, SQLSRV_FETCH_ASSOC)) { ?>
+        <tr>
+          <td><?php echo $d["IdDetalle"]; ?></td>
+          <td><?php echo $d["Tipo"]; ?></td>
+          <td><?php echo $d["Descripcion"]; ?></td>
+          <td><?php echo $d["Cantidad"]; ?></td>
+          <td><?php echo number_format($d["PrecioUnitario"], 2); ?></td>
+          <td><?php echo number_format($d["Subtotal"], 2); ?></td>
+        </tr>
+      <?php } ?>
     </table>
-
-    <?php if ($presupuesto) { ?>
-        <h2>📝 Presupuesto #<?php echo $presupuesto["IdPresupuesto"]; ?> - Vehículo <?php echo $presupuesto["Placa"]; ?></h2>
-        <p>Fecha: <?php echo $presupuesto["FechaPresupuesto"]->format("Y-m-d"); ?> | 
-           Estado: <?php echo $presupuesto["Estado"]; ?> | 
-           Total: <b><?php echo number_format($presupuesto["Total"], 2); ?></b></p>
-
-        <!-- Editar estado -->
-        <form method="POST">
-            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
-            <label>Estado:</label>
-            <select name="estado">
-                <option value="Pendiente" <?php if ($presupuesto["Estado"]=="Pendiente") echo "selected"; ?>>Pendiente</option>
-                <option value="Aprobado" <?php if ($presupuesto["Estado"]=="Aprobado") echo "selected"; ?>>Aprobado</option>
-                <option value="Cancelado" <?php if ($presupuesto["Estado"]=="Cancelado") echo "selected"; ?>>Cancelado</option>
-            </select>
-            <button type="submit" name="editarPresupuesto" class="btn">✏️ Actualizar</button>
-        </form>
-
-        <!-- Agregar detalle -->
-        <form method="POST">
-            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
-            <h3>➕ Agregar Detalle</h3>
-            <select name="tipo" required>
-                <option value="Servicio">Servicio</option>
-                <option value="Repuesto">Repuesto</option>
-            </select>
-            <input type="text" name="descripcion" placeholder="Descripción" required>
-            <input type="number" name="cantidad" value="1" min="1" required>
-            <input type="number" step="0.01" name="precio" placeholder="Precio unitario" required>
-            <button type="submit" name="agregarDetalle" class="btn">Agregar</button>
-        </form>
-
-        <!-- Detalle del presupuesto -->
-        <h3>📌 Detalle</h3>
-        <table>
-            <tr><th>ID</th><th>Tipo</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th>Acciones</th></tr>
-            <?php while ($d = sqlsrv_fetch_array($detalles, SQLSRV_FETCH_ASSOC)) { ?>
-                <tr>
-                    <td><?php echo $d["IdDetalle"]; ?></td>
-                    <td><?php echo $d["Tipo"]; ?></td>
-                    <td><?php echo $d["Descripcion"]; ?></td>
-                    <td>
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="idDetalle" value="<?php echo $d["IdDetalle"]; ?>">
-                            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
-                            <input type="number" name="cantidad" value="<?php echo $d["Cantidad"]; ?>" min="1">
-                            <input type="number" step="0.01" name="precio" value="<?php echo $d["PrecioUnitario"]; ?>">
-                            <button type="submit" name="editarDetalle" class="btn">✏️</button>
-                        </form>
-                    </td>
-                    <td><?php echo number_format($d["PrecioUnitario"], 2); ?></td>
-                    <td><?php echo number_format($d["Subtotal"], 2); ?></td>
-                    <td>
-                        <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este detalle?');">
-                            <input type="hidden" name="idDetalle" value="<?php echo $d["IdDetalle"]; ?>">
-                            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
-                            <button type="submit" name="eliminarDetalle" class="btn btn-red">🗑️</button>
-                        </form>
-                    </td>
-                </tr>
-            <?php } ?>
-        </table>
-    <?php } ?>
-
-    <div style="text-align:center; margin-top:20px;">
-        <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
-    </div>
+  <?php } ?>
 </body>
 </html>
+
