@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     apt-transport-https \
     curl \
     unzip \
+    git \
     libzip-dev \
     unixodbc-dev \
     locales \
@@ -48,11 +49,21 @@ RUN echo '<Directory "/var/www/html">\n\
 </Directory>' > /etc/apache2/conf-available/docker.conf \
     && a2enconf docker
 
-# Copiar la aplicación
-COPY . /var/www/html
+# Establecer directorio de trabajo
+WORKDIR /var/www/html
 
-# Dar permisos correctos
+# Copiar el código de la aplicación
+COPY . .
+
+# Copiar Composer desde la imagen oficial
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Instalar dependencias PHP (incluye Dompdf)
+RUN composer require dompdf/dompdf
+
+# Permisos correctos
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
+# Exponer puerto
 EXPOSE 80
