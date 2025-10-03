@@ -1,13 +1,9 @@
 <?php
-require 'vendor/autoload.php';
-use Dompdf\Dompdf;
-use Dompdf\Options;
-
-// 🔹 Conexión BD
+// Conexión a la BD
 $serverName = "db28471.public.databaseasp.net";
-$database   = "db28471";
-$username   = "db28471";
-$password   = "2Fb%y9-EH_z7";
+$database = "db28471";
+$username = "db28471";
+$password = "2Fb%y9-EH_z7";
 
 try {
     $conn = new PDO("sqlsrv:Server=$serverName;Database=$database", $username, $password);
@@ -16,162 +12,209 @@ try {
     die("Error de conexión: " . $e->getMessage());
 }
 
-/* ===================================================
-   🔹 PROCESAR FACTURA
-   =================================================== */
-if (isset($_POST['generar'])) {
+// --- Emitir factura ---
+if (isset($_POST['emitir'])) {
     $idPresupuesto = !empty($_POST['idPresupuesto']) ? $_POST['idPresupuesto'] : null;
-    $idCita        = !empty($_POST['idCita']) ? $_POST['idCita'] : null;
-    $total         = 0;
-    $detalleDesc   = "";
+    $idHistorial   = !empty($_POST['idHistorial']) ? $_POST['idHistorial'] : null;
+    $estado        = $_POST['estado'];
 
-    // Si se factura un presupuesto
+    $total = 0;
+    $detalleDesc = "Factura generada";
+
+    // Si viene de presupuesto, obtener total y descripción
     if ($idPresupuesto) {
-        $sql = "SELECT Total FROM Presupuestos WHERE IdPresupuesto = :id";
+        $sql = "SELECT Total FROM Presupuestos WHERE IdPresupuesto = :idPresupuesto";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([':id' => $idPresupuesto]);
+        $stmt->bindParam(':idPresupuesto', $idPresupuesto);
+        $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $total = $row ? $row['Total'] : 0;
-        $detalleDesc = "Facturación de Presupuesto #$idPresupuesto";
-
-        // Eliminar presupuesto
-        $conn->prepare("DELETE FROM Presupuestos WHERE IdPresupuesto = :id")
-             ->execute([':id' => $idPresupuesto]);
+        if ($row) {
+            $total = $row['Total'];
+            $detalleDesc = "Presupuesto #" . $idPresupuesto;
+        }
     }
 
-    // Si se factura una cita
-    if ($idCita) {
-        $sql = "SELECT Servicio FROM Citas WHERE IdCita = :id";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([':id' => $idCita]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $detalleDesc = $row ? $row['Servicio'] : "Cita";
-
-        $total = 150000; // 👈 costo fijo o lo puedes calcular según reglas
-
-        // Eliminar cita
-        $conn->prepare("DELETE FROM Citas WHERE IdCita = :id")
-             ->execute([':id' => $idCita]);
+    // Si viene de historial, poner un valor fijo o personalizado
+    if ($idHistorial) {
+        $total = 250000; 
+        $detalleDesc = "Reparación #" . $idHistorial;
     }
 
-    // Insertar factura
-    $sql = "INSERT INTO Facturas (IdPresupuesto, Total) 
+    // Insertar factura primero
+    $sql = "INSERT INTO Facturas (IdPresupuesto, IdHistorial, Total, Estado) 
             OUTPUT INSERTED.IdFactura
-            VALUES (:presupuesto, :total)";
+            VALUES (:idPresupuesto, :idHistorial, :total, :estado)";
     $stmt = $conn->prepare($sql);
-    $stmt->bindParam(':presupuesto', $idPresupuesto);
+    $stmt->bindParam(':idPresupuesto', $idPresupuesto);
+    $stmt->bindParam(':idHistorial', $idHistorial);
     $stmt->bindParam(':total', $total);
+    $stmt->bindParam(':estado', $estado);
     $stmt->execute();
-
     $idFactura = $stmt->fetchColumn();
 
-    // Insertar detalle
+    // Insertar detalle de la factura
     $sql = "INSERT INTO DetalleFactura (IdFactura, Tipo, Descripcion, Cantidad, PrecioUnitario) 
-            VALUES (:idFactura, 'Servicio', :desc, 1, :total)";
+            VALUES (:idFactura, 'Servicio', :desc, 1, :precio)";
     $stmt = $conn->prepare($sql);
     $stmt->execute([
         ':idFactura' => $idFactura,
         ':desc' => $detalleDesc,
-        ':total' => $total
+        ':precio' => $total
     ]);
 
-    // Generar PDF
-    $html = "
-    <h1>Factura #$idFactura</h1>
-    <p><strong>Fecha:</strong> " . date("Y-m-d H:i:s") . "</p>
-    <table border='1' cellpadding='6' cellspacing='0' width='100%'>
-        <tr>
-            <th>Descripción</th>
-            <th>Cantidad</th>
-            <th>Precio Unitario</th>
-            <th>Subtotal</th>
-        </tr>
-        <tr>
-            <td>$detalleDesc</td>
-            <td>1</td>
-            <td>$$total</td>
-            <td>$$total</td>
-        </tr>
-    </table>
-    <h3>Total: $$total</h3>
-    <p><strong>Estado:</strong> Pagada</p>
-    ";
-
-    $options = new Options();
-    $options->set('isRemoteEnabled', true);
-    $dompdf = new Dompdf($options);
-    $dompdf->loadHtml($html);
-    $dompdf->setPaper('A4', 'portrait');
-    $dompdf->render();
-
-    // Descargar PDF directamente
-    $dompdf->stream("Factura_$idFactura.pdf", ["Attachment" => true]);
-    exit;
+    // Ahora eliminar presupuesto o historial
+    if ($idPresupuesto) {
+        $conn->prepare("DELETE FROM Presupuestos WHERE IdPresupuesto = :id")
+             ->execute([':id' => $idPresupuesto]);
+    }
+    if ($idHistorial) {
+        $conn->prepare("DELETE FROM HistorialReparaciones WHERE IdHistorial = :id")
+             ->execute([':id' => $idHistorial]);
+    }
 }
 
-/* ===================================================
-   🔹 CONSULTAR DATOS PARA EL FORMULARIO
-   =================================================== */
-// Presupuestos pendientes
-$presupuestos = $conn->query("SELECT IdPresupuesto, Total FROM Presupuestos")->fetchAll(PDO::FETCH_ASSOC);
-// Citas programadas
-$citas = $conn->query("SELECT IdCita, Servicio, FechaCita FROM Citas")->fetchAll(PDO::FETCH_ASSOC);
-// Facturas existentes
-$facturas = $conn->query("SELECT * FROM Facturas ORDER BY FechaFactura DESC")->fetchAll(PDO::FETCH_ASSOC);
+// --- Eliminar factura ---
+if (isset($_POST['eliminar'])) {
+    $idFactura = $_POST['idFactura'];
+    $sql = "DELETE FROM Facturas WHERE IdFactura = :idFactura";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':idFactura', $idFactura);
+    $stmt->execute();
+}
+
+// --- Consultar facturas ---
+$sql = "SELECT * FROM Facturas ORDER BY FechaFactura DESC";
+$stmt = $conn->query($sql);
+$facturas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// --- Obtener presupuestos pendientes ---
+$sql = "SELECT IdPresupuesto, Total FROM Presupuestos WHERE Estado='Pendiente'";
+$stmt = $conn->query($sql);
+$presupuestos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// --- Obtener reparaciones ---
+$sql = "SELECT IdHistorial, Servicio, FechaReparacion FROM HistorialReparaciones";
+$stmt = $conn->query($sql);
+$reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Facturación</title>
+    <title>Facturación Automática</title>
     <style>
-        body { font-family: Arial; background:#222; color:#eee; text-align:center; }
-        form, table { margin:20px auto; padding:15px; background:#333; border-radius:8px; }
-        select, button { margin:5px; padding:8px; }
-        table { border-collapse: collapse; width:80%; }
-        th, td { border:1px solid #555; padding:8px; }
-        th { background:#ff3b3b; color:white; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            text-align: center;
+        }
+        .volver {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            background-color: #444;
+            color: #f0f0f0;
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .volver:hover { background-color: #666; }
+        .logo { width: 120px; margin: 10px auto 20px; display: block; }
+        h2, h3 {
+            color: #f7cbcb;
+            text-shadow: -1px -1px 0 #ff3b3b, 1px -1px 0 #ff3b3b, -1px 1px 0 #ff3b3b, 1px 1px 0 #ff3b3b;
+        }
+        form {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 20px auto;
+            text-align: left;
+        }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        select, input {
+            width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #555;
+            background-color: #1e1e1e; color: #fff;
+        }
+        button {
+            background-color: #ff3b3b; color: #fff; border: none; padding: 10px 14px;
+            margin-top: 15px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+        button:hover { background-color: #cc2e2e; }
+        table {
+            width: 100%; border-collapse: collapse; margin: 30px 0;
+            background-color: #2a2a2a; border-radius: 12px; overflow: hidden;
+        }
+        th, td { padding: 10px; border: 1px solid #444; text-align: center; }
+        th { background-color: #ff3b3b; color: white; }
+        tr:hover { background-color: #3a3a3a; }
     </style>
 </head>
 <body>
-    <h1>Generar Factura</h1>
+    <a href="Vendedor.php" class="volver">⬅ Volver al Panel Vendedor</a>
+    <img src="logo.png" alt="Logo Auto Parts" class="logo">
+    <h2> Facturación Automática</h2>
 
+    <!-- Formulario -->
     <form method="POST">
-        <label>Presupuesto:</label>
+        <label>Presupuesto: </label>
         <select name="idPresupuesto">
             <option value="">-- Ninguno --</option>
             <?php foreach ($presupuestos as $p): ?>
-                <option value="<?= $p['IdPresupuesto'] ?>">#<?= $p['IdPresupuesto'] ?> - $<?= $p['Total'] ?></option>
+                <option value="<?= $p['IdPresupuesto'] ?>">#<?= $p['IdPresupuesto'] ?> - Total: <?= $p['Total'] ?></option>
             <?php endforeach; ?>
         </select>
 
-        <label>Cita:</label>
-        <select name="idCita">
+        <label>Reparación: </label>
+        <select name="idHistorial">
             <option value="">-- Ninguna --</option>
-            <?php foreach ($citas as $c): ?>
-                <option value="<?= $c['IdCita'] ?>">#<?= $c['IdCita'] ?> - <?= $c['Servicio'] ?> (<?= $c['FechaCita'] ?>)</option>
+            <?php foreach ($reparaciones as $r): ?>
+                <option value="<?= $r['IdHistorial'] ?>">#<?= $r['IdHistorial'] ?> - <?= $r['Servicio'] ?> (<?= $r['FechaReparacion'] ?>)</option>
             <?php endforeach; ?>
         </select>
 
-        <button type="submit" name="generar">🧾 Facturar</button>
+        <label>Estado: </label>
+        <select name="estado">
+            <option value="Pagada">Pagada</option>
+            <option value="Pendiente">Pendiente</option>
+        </select>
+
+        <button type="submit" name="emitir">➕ Emitir Factura</button>
     </form>
 
-    <h2>Facturas Generadas</h2>
+    <!-- Tabla de facturas -->
+    <h3>Listado de Facturas</h3>
     <table>
         <tr>
-            <th>ID</th>
+            <th>ID Factura</th>
             <th>Presupuesto</th>
-            <th>Total</th>
+            <th>Historial</th>
             <th>Fecha</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Acción</th>
         </tr>
         <?php foreach ($facturas as $f): ?>
-        <tr>
-            <td><?= $f['IdFactura'] ?></td>
-            <td><?= $f['IdPresupuesto'] ?></td>
-            <td>$<?= $f['Total'] ?></td>
-            <td><?= $f['FechaFactura'] ?></td>
-        </tr>
+            <tr>
+                <td><?= $f['IdFactura'] ?></td>
+                <td><?= $f['IdPresupuesto'] ?></td>
+                <td><?= $f['IdHistorial'] ?></td>
+                <td><?= $f['FechaFactura'] ?></td>
+                <td><?= $f['Total'] ?></td>
+                <td><?= $f['Estado'] ?></td>
+                <td>
+                    <form method="POST" style="display:inline;">
+                        <input type="hidden" name="idFactura" value="<?= $f['IdFactura'] ?>">
+                        <button type="submit" name="eliminar">🗑 Eliminar</button>
+                    </form>
+                </td>
+            </tr>
         <?php endforeach; ?>
     </table>
 </body>
