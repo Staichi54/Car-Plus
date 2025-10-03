@@ -23,7 +23,7 @@ $conn = sqlsrv_connect($serverName, $connectionOptions);
 // ➡️ CREATE
 if (isset($_POST["crear"])) {
     $usuario = $_POST["usuario"];
-    $contrasena = password_hash($_POST["contrasena"], PASSWORD_DEFAULT);
+    $contrasena = $_POST["contrasena"]; // 🔹 sin hash
     $rol = $_POST["rol"];
     $correo = $_POST["correo"];
 
@@ -42,7 +42,7 @@ if (isset($_POST["editar"])) {
     $correo = $_POST["correo"];
     
     if (!empty($_POST["contrasena"])) {
-        $contrasena = password_hash($_POST["contrasena"], PASSWORD_DEFAULT);
+        $contrasena = $_POST["contrasena"]; // 🔹 sin hash
         $sql = "UPDATE Usuarios SET Usuario=?, Contrasena=?, Rol=?, Correo=? WHERE IdUsuario=?";
         sqlsrv_query($conn, $sql, [$usuario, $contrasena, $rol, $correo, $idUsuario]);
     } else {
@@ -94,7 +94,7 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
     <form method="POST">
         <h2>➕ Crear Usuario</h2>
         <input type="text" name="usuario" placeholder="Usuario" required>
-        <input type="password" name="contrasena" placeholder="Contraseña" required>
+        <input type="text" name="contrasena" placeholder="Contraseña" required> <!-- 🔹 visible -->
         <input type="email" name="correo" placeholder="Correo" required>
         <select name="rol" required>
             <option value="admin">Admin</option>
@@ -106,11 +106,12 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
     <!-- Lista de usuarios -->
     <h2>📋 Usuarios Registrados</h2>
     <table>
-        <tr><th>ID</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr>
+        <tr><th>ID</th><th>Usuario</th><th>Contraseña</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr>
         <?php while ($row = sqlsrv_fetch_array($usuarios, SQLSRV_FETCH_ASSOC)) { ?>
             <tr>
                 <td><?php echo $row["IdUsuario"]; ?></td>
                 <td><?php echo $row["Usuario"]; ?></td>
+                <td><?php echo $row["Contrasena"]; ?></td> <!-- 🔹 mostrada -->
                 <td><?php echo $row["Correo"]; ?></td>
                 <td><?php echo $row["Rol"]; ?></td>
                 <td>
@@ -118,7 +119,7 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
                     <form method="POST" style="display:inline;">
                         <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
                         <input type="text" name="usuario" value="<?php echo $row["Usuario"]; ?>" required>
-                        <input type="password" name="contrasena" placeholder="Nueva contraseña (opcional)">
+                        <input type="text" name="contrasena" placeholder="Nueva contraseña (opcional)">
                         <input type="email" name="correo" value="<?php echo $row["Correo"]; ?>" required>
                         <select name="rol">
                             <option value="admin" <?php if ($row["Rol"]=="admin") echo "selected"; ?>>Admin</option>
