@@ -2,7 +2,7 @@
 session_start();
 if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "admin") { 
     // Solo admin puede gestionar usuarios
-    header("Location: Index.php");
+    header("Location: Admin.php");
     exit();
 }
 
@@ -87,7 +87,7 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
 <body>
     <div class="top-bar">
         <h1>👤 Gestión de Usuarios</h1>
-        <a href="Index.php" class="btn">⬅ Volver a Inicio</a>
+        <a href="Admin.php" class="btn">⬅ Volver a Inicio</a>
     </div>
 
     <!-- Crear nuevo usuario -->
