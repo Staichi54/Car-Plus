@@ -1,3 +1,4 @@
+```php
 <?php
 // Conexión a la BD
 $serverName = "db28471.public.databaseasp.net";
@@ -140,14 +141,13 @@ $repuestos = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     <?php if (!empty($presupuestos)): ?>
         <h3>Presupuestos</h3>
         <table>
-            <tr><th>ID Presupuesto</th><th>ID Vehículo</th><th>Fecha</th><th>Detalle</th><th>Monto Estimado</th><th>Estado</th></tr>
+            <tr><th>ID Presupuesto</th><th>ID Vehículo</th><th>Fecha</th><th>Total</th><th>Estado</th></tr>
             <?php foreach ($presupuestos as $p): ?>
             <tr>
                 <td><?= $p['IdPresupuesto'] ?></td>
                 <td><?= $p['IdVehiculo'] ?></td>
                 <td><?= $p['FechaPresupuesto'] ?></td>
-                <td><?= $p['Detalle'] ?></td>
-                <td><?= $p['MontoEstimado'] ?></td>
+                <td><?= $p['Total'] ?></td>
                 <td><?= $p['Estado'] ?></td>
             </tr>
             <?php endforeach; ?>
@@ -188,3 +188,4 @@ $repuestos = $conn->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     </table>
 </body>
 </html>
+```
