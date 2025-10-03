@@ -2,7 +2,7 @@
 // ========================================
 // CONEXIÓN A LA BASE DE DATOS
 // ========================================
-$serverName = "localhost";
+$serverName = "db28471.public.databaseasp.net";
 $connectionOptions = [
     "Database" => "db28471",
     "Uid" => "db28471",     
@@ -217,3 +217,4 @@ $stmt = sqlsrv_query($conn, $sql);
 
 </body>
 </html>
+
