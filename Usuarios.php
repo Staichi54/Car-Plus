@@ -73,7 +73,6 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
   <meta charset="UTF-8">
   <title>Gestión de Usuarios</title>
   <style>
-    /* Fondo general en modo oscuro */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -83,17 +82,15 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
       text-align: center;
     }
 
-    /* Encabezado */
     h1 {
       margin: 20px 0 10px;
       color: #f7cbcb;
       font-weight: bold;
       font-size: 28px;
-      text-shadow: 
-        -1px -1px 0 #ff3b3b,
-         1px -1px 0 #ff3b3b,
-        -1px  1px 0 #ff3b3b,
-         1px  1px 0 #ff3b3b;
+      text-shadow: -1px -1px 0 #ff3b3b,
+                   1px -1px 0 #ff3b3b,
+                  -1px  1px 0 #ff3b3b,
+                   1px  1px 0 #ff3b3b;
     }
 
     h2 {
@@ -101,14 +98,32 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
       margin: 20px 0 10px;
     }
 
-    /* Logo */
     .logo {
       width: 120px;
       margin: 20px auto;
       display: block;
     }
 
-    /* Formulario */
+    .volver {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      background-color: #444;
+      color: #f0f0f0;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+    .volver:hover {
+      background-color: #666;
+      transform: scale(1.05);
+    }
+
     form {
       width: 90%;
       max-width: 800px;
@@ -117,14 +132,6 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
       border-radius: 12px;
       background: #2a2a2a;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
-    }
-
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-      text-align: left;
-      color: #f0f0f0;
     }
 
     input, select {
@@ -145,10 +152,10 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
 
     button {
       display: inline-block;
-      margin: 8px 5px;
-      padding: 10px 16px;
+      margin: 6px 4px;
+      padding: 8px 12px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
       transition: 0.3s ease;
@@ -158,13 +165,12 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
     button[name="crear"] { background: #ff3b3b; }
     button[name="crear"]:hover { background: #cc2e2e; }
 
-    button[name="editar"] { background: #ffaa2e; }
-    button[name="editar"]:hover { background: #e68a00; }
+    .btn-edit { background: #ffaa2e; color: #000; }
+    .btn-edit:hover { background: #e68a00; }
 
-    button[name="eliminar"] { background: #444; }
-    button[name="eliminar"]:hover { background: #666; }
+    .btn-delete { background: #444; }
+    .btn-delete:hover { background: #666; }
 
-    /* Tabla */
     table {
       border-collapse: collapse;
       width: 90%;
@@ -186,70 +192,33 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
       color: #fff;
     }
 
-    tr {
-      transition: background 0.3s ease;
-    }
-
     tr:hover {
       background: #3b3b3b;
-    }
-
-    /* Botón volver */
-    .volver {
-      position: absolute;
-      top: 15px;
-      left: 20px;
-      background-color: #444;
-      color: #f0f0f0;
-      text-decoration: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.3s ease;
-    }
-
-    .volver:hover {
-      background-color: #666;
-      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
-  <!-- Botón volver -->
   <a href="Admin.php" class="volver">⬅ Volver al Panel Admin</a>
 
-  <!-- Logo -->
   <img src="logo.png" alt="Logo Auto Parts" class="logo">
 
   <h1>Gestión de Usuarios</h1>
 
   <!-- Crear nuevo usuario -->
   <form method="POST">
-    <input type="hidden" name="idUsuario" id="idUsuario">
-
-    <label>Usuario:</label>
-    <input type="text" name="usuario" required>
-
-    <label>Contraseña:</label>
-    <input type="text" name="contrasena" required>
-
-    <label>Correo:</label>
-    <input type="email" name="correo" required>
-
-    <label>Rol:</label>
+    <h2>➕ Crear Usuario</h2>
+    <input type="text" name="usuario" placeholder="Usuario" required>
+    <input type="password" name="contrasena" placeholder="Contraseña" required>
+    <input type="email" name="correo" placeholder="Correo" required>
     <select name="rol" required>
       <option value="admin">Admin</option>
       <option value="vendedor">Vendedor</option>
     </select>
-
     <button type="submit" name="crear">Crear</button>
   </form>
 
-  <!-- Tabla de usuarios -->
-  <h2>Usuarios Registrados</h2>
+  <!-- Lista de usuarios -->
+  <h2>📋 Usuarios Registrados</h2>
   <table>
     <tr>
       <th>ID</th>
@@ -267,23 +236,16 @@ $usuarios = sqlsrv_query($conn, "SELECT * FROM Usuarios ORDER BY IdUsuario ASC")
         <td><?php echo $row["Correo"]; ?></td>
         <td><?php echo $row["Rol"]; ?></td>
         <td>
-          <!-- Editar -->
+          <!-- Botón Editar -->
           <form method="POST" style="display:inline;">
             <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
-            <input type="text" name="usuario" value="<?php echo $row["Usuario"]; ?>" required>
-            <input type="text" name="contrasena" placeholder="Nueva contraseña (opcional)">
-            <input type="email" name="correo" value="<?php echo $row["Correo"]; ?>" required>
-            <select name="rol">
-              <option value="admin" <?php if ($row["Rol"]=="admin") echo "selected"; ?>>Admin</option>
-              <option value="vendedor" <?php if ($row["Rol"]=="vendedor") echo "selected"; ?>>Vendedor</option>
-            </select>
-            <button type="submit" name="editar">Editar</button>
+            <button type="submit" name="editar" class="btn-edit">✏️ Editar</button>
           </form>
 
-          <!-- Eliminar -->
+          <!-- Botón Eliminar -->
           <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este usuario?');">
             <input type="hidden" name="idUsuario" value="<?php echo $row["IdUsuario"]; ?>">
-            <button type="submit" name="eliminar">Eliminar</button>
+            <button type="submit" name="eliminar" class="btn-delete">🗑️ Eliminar</button>
           </form>
         </td>
       </tr>
