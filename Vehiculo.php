@@ -21,15 +21,20 @@ $mensaje = "";
 // AGREGAR VEHÍCULO + PERSONA
 // ========================================
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar"])) {
-    // Insertar persona
-    $sqlPersona = "INSERT INTO Personas (Nombre, Cedula, Correo, Telefono) VALUES (?, ?, ?, ?)";
-    $paramsPersona = [$_POST["nombre_persona"], $_POST["cedula_persona"], $_POST["correo_persona"], $_POST["telefono_persona"]];
+    // Insertar persona con OUTPUT para recuperar IdPersona
+    $sqlPersona = "INSERT INTO Personas (Nombre, Cedula, Correo, Telefono)
+                   OUTPUT INSERTED.IdPersona
+                   VALUES (?, ?, ?, ?)";
+    $paramsPersona = [
+        $_POST["nombre_persona"],
+        $_POST["cedula_persona"],
+        $_POST["correo_persona"],
+        $_POST["telefono_persona"]
+    ];
     $stmtPersona = sqlsrv_query($conn, $sqlPersona, $paramsPersona);
 
     if ($stmtPersona) {
-        // Obtener ID de persona recién insertada
-        $res = sqlsrv_query($conn, "SELECT SCOPE_IDENTITY() AS IdPersona");
-        $row = sqlsrv_fetch_array($res, SQLSRV_FETCH_ASSOC);
+        $row = sqlsrv_fetch_array($stmtPersona, SQLSRV_FETCH_ASSOC);
         $idPersona = $row["IdPersona"];
 
         // Insertar vehículo asociado
@@ -41,9 +46,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["agregar"])) {
         ];
         $stmtVehiculo = sqlsrv_query($conn, $sqlVehiculo, $paramsVehiculo);
 
-        $mensaje = $stmtVehiculo ? "✅ Vehículo y propietario agregados correctamente." : "❌ Error al agregar vehículo.";
+        $mensaje = $stmtVehiculo
+            ? "✅ Vehículo y propietario agregados correctamente."
+            : "❌ Error al agregar vehículo: " . print_r(sqlsrv_errors(), true);
     } else {
-        $mensaje = "❌ Error al agregar persona.";
+        $mensaje = "❌ Error al agregar persona: " . print_r(sqlsrv_errors(), true);
     }
 }
 
@@ -61,7 +68,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["actualizar"])) {
 
     // Actualizar persona
     $sqlPersona = "UPDATE Personas SET Nombre=?, Cedula=?, Correo=?, Telefono=? WHERE IdPersona=?";
-    $paramsPersona = [$_POST["nombre_persona"], $_POST["cedula_persona"], $_POST["correo_persona"], $_POST["telefono_persona"], $idPersona];
+    $paramsPersona = [
+        $_POST["nombre_persona"],
+        $_POST["cedula_persona"],
+        $_POST["correo_persona"],
+        $_POST["telefono_persona"],
+        $idPersona
+    ];
     sqlsrv_query($conn, $sqlPersona, $paramsPersona);
 
     // Actualizar vehículo
@@ -74,7 +87,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["actualizar"])) {
     ];
     $stmt = sqlsrv_query($conn, $sqlVehiculo, $paramsVehiculo);
 
-    $mensaje = $stmt ? "✅ Vehículo y propietario actualizados correctamente." : "❌ Error al actualizar.";
+    $mensaje = $stmt
+        ? "✅ Vehículo y propietario actualizados correctamente."
+        : "❌ Error al actualizar: " . print_r(sqlsrv_errors(), true);
 }
 
 // ========================================
@@ -107,7 +122,7 @@ if (isset($_GET["eliminar"])) {
 
         $mensaje = "✅ Vehículo eliminado correctamente.";
     } else {
-        $mensaje = "❌ Error al eliminar vehículo.";
+        $mensaje = "❌ Error al eliminar vehículo: " . print_r(sqlsrv_errors(), true);
     }
 }
 
@@ -217,4 +232,3 @@ $stmt = sqlsrv_query($conn, $sql);
 
 </body>
 </html>
-
