@@ -5,35 +5,55 @@ if (!isset($_SESSION["usuario"]) || $_SESSION["rol"] != "vendedor") {
     exit();
 }
 
-// Conexión a SQL Server
+// 🔹 Conexión a SQL Server
 $serverName = "db28471.public.databaseasp.net"; 
-    $connectionOptions = [
-        "Database" => "db28471",
-        "Uid" => "db28471",     // Usuario que creaste en SSMS
-        "PWD" => "2Fb%y9-EH_z7",     // Contraseña que le diste
-        "CharacterSet" => "UTF-8"
-    ];
+$connectionOptions = [
+    "Database" => "db28471",
+    "Uid" => "db28471",
+    "PWD" => "2Fb%y9-EH_z7",
+    "CharacterSet" => "UTF-8"
+];
 $conn = sqlsrv_connect($serverName, $connectionOptions);
 
-// Crear presupuesto
+/* =========================
+   🔹 CRUD PRESUPUESTOS
+   ========================= */
+
+// ➡️ CREATE Presupuesto
 if (isset($_POST["crear"])) {
     $idVehiculo = $_POST["idVehiculo"];
-
     $sql = "INSERT INTO Presupuestos (IdVehiculo) VALUES (?)";
-    $params = [$idVehiculo];
-    sqlsrv_query($conn, $sql, $params);
+    sqlsrv_query($conn, $sql, [$idVehiculo]);
+    header("Location: Presupuesto.php");
+    exit();
+}
 
-    // Obtener ID creado
-    $sql = "SELECT SCOPE_IDENTITY() AS IdPresupuesto";
-    $res = sqlsrv_query($conn, $sql);
-    $row = sqlsrv_fetch_array($res, SQLSRV_FETCH_ASSOC);
-    $idPresupuesto = $row["IdPresupuesto"];
-
+// ➡️ UPDATE Presupuesto (Estado)
+if (isset($_POST["editarPresupuesto"])) {
+    $idPresupuesto = $_POST["idPresupuesto"];
+    $estado = $_POST["estado"];
+    $sql = "UPDATE Presupuestos SET Estado=? WHERE IdPresupuesto=?";
+    sqlsrv_query($conn, $sql, [$estado, $idPresupuesto]);
     header("Location: Presupuesto.php?id=$idPresupuesto");
     exit();
 }
 
-// Agregar detalle al presupuesto
+// ➡️ DELETE Presupuesto
+if (isset($_POST["eliminarPresupuesto"])) {
+    $idPresupuesto = $_POST["idPresupuesto"];
+    $sql = "DELETE FROM DetallePresupuesto WHERE IdPresupuesto=?";
+    sqlsrv_query($conn, $sql, [$idPresupuesto]);
+    $sql = "DELETE FROM Presupuestos WHERE IdPresupuesto=?";
+    sqlsrv_query($conn, $sql, [$idPresupuesto]);
+    header("Location: Presupuesto.php");
+    exit();
+}
+
+/* =========================
+   🔹 CRUD DETALLES
+   ========================= */
+
+// ➡️ CREATE Detalle
 if (isset($_POST["agregarDetalle"])) {
     $idPresupuesto = $_POST["idPresupuesto"];
     $tipo = $_POST["tipo"];
@@ -43,21 +63,61 @@ if (isset($_POST["agregarDetalle"])) {
 
     $sql = "INSERT INTO DetallePresupuesto (IdPresupuesto, Tipo, Descripcion, Cantidad, PrecioUnitario)
             VALUES (?, ?, ?, ?, ?)";
-    $params = [$idPresupuesto, $tipo, $descripcion, $cantidad, $precio];
-    sqlsrv_query($conn, $sql, $params);
+    sqlsrv_query($conn, $sql, [$idPresupuesto, $tipo, $descripcion, $cantidad, $precio]);
 
-    // Actualizar total
+    // Recalcular total
     $sql = "UPDATE Presupuestos
             SET Total = (SELECT SUM(Subtotal) FROM DetallePresupuesto WHERE IdPresupuesto=?)
             WHERE IdPresupuesto=?";
-    $params = [$idPresupuesto, $idPresupuesto];
-    sqlsrv_query($conn, $sql, $params);
+    sqlsrv_query($conn, $sql, [$idPresupuesto, $idPresupuesto]);
 
     header("Location: Presupuesto.php?id=$idPresupuesto");
     exit();
 }
 
-// Consultar presupuesto seleccionado
+// ➡️ UPDATE Detalle
+if (isset($_POST["editarDetalle"])) {
+    $idDetalle = $_POST["idDetalle"];
+    $idPresupuesto = $_POST["idPresupuesto"];
+    $cantidad = $_POST["cantidad"];
+    $precio = $_POST["precio"];
+
+    $sql = "UPDATE DetallePresupuesto SET Cantidad=?, PrecioUnitario=? WHERE IdDetalle=?";
+    sqlsrv_query($conn, $sql, [$cantidad, $precio, $idDetalle]);
+
+    // Recalcular total
+    $sql = "UPDATE Presupuestos
+            SET Total = (SELECT SUM(Subtotal) FROM DetallePresupuesto WHERE IdPresupuesto=?)
+            WHERE IdPresupuesto=?";
+    sqlsrv_query($conn, $sql, [$idPresupuesto, $idPresupuesto]);
+
+    header("Location: Presupuesto.php?id=$idPresupuesto");
+    exit();
+}
+
+// ➡️ DELETE Detalle
+if (isset($_POST["eliminarDetalle"])) {
+    $idDetalle = $_POST["idDetalle"];
+    $idPresupuesto = $_POST["idPresupuesto"];
+
+    $sql = "DELETE FROM DetallePresupuesto WHERE IdDetalle=?";
+    sqlsrv_query($conn, $sql, [$idDetalle]);
+
+    // Recalcular total
+    $sql = "UPDATE Presupuestos
+            SET Total = (SELECT SUM(Subtotal) FROM DetallePresupuesto WHERE IdPresupuesto=?)
+            WHERE IdPresupuesto=?";
+    sqlsrv_query($conn, $sql, [$idPresupuesto, $idPresupuesto]);
+
+    header("Location: Presupuesto.php?id=$idPresupuesto");
+    exit();
+}
+
+/* =========================
+   🔹 CONSULTAS
+   ========================= */
+
+// Presupuesto seleccionado
 $idPresupuesto = isset($_GET["id"]) ? $_GET["id"] : null;
 $presupuesto = null;
 $detalles = null;
@@ -74,10 +134,12 @@ if ($idPresupuesto) {
 }
 
 // Lista de presupuestos
-$lista = sqlsrv_query($conn, "SELECT P.IdPresupuesto, V.Placa, P.FechaPresupuesto, P.Total, P.Estado
-                              FROM Presupuestos P
-                              INNER JOIN Vehiculos V ON P.IdVehiculo = V.IdVehiculo
-                              ORDER BY P.FechaPresupuesto DESC");
+$lista = sqlsrv_query($conn, "
+    SELECT P.IdPresupuesto, V.Placa, P.FechaPresupuesto, P.Total, P.Estado
+    FROM Presupuestos P
+    INNER JOIN Vehiculos V ON P.IdVehiculo = V.IdVehiculo
+    ORDER BY P.FechaPresupuesto DESC
+");
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -87,10 +149,11 @@ $lista = sqlsrv_query($conn, "SELECT P.IdPresupuesto, V.Placa, P.FechaPresupuest
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align:center; }
         th { background: #6c757d; color: white; }
-        .btn { padding: 6px 12px; background: #007bff; color: white; border: none; cursor: pointer; margin: 5px; }
+        .btn { padding: 6px 12px; background: #007bff; color: white; border: none; cursor: pointer; margin: 3px; }
         .btn:hover { background: #0056b3; }
+        .btn-red { background: red; }
         input, select { margin: 5px; padding: 6px; width: 95%; }
     </style>
 </head>
@@ -114,7 +177,7 @@ $lista = sqlsrv_query($conn, "SELECT P.IdPresupuesto, V.Placa, P.FechaPresupuest
     <!-- Lista de presupuestos -->
     <h2>📋 Presupuestos Existentes</h2>
     <table>
-        <tr><th>ID</th><th>Vehículo</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acción</th></tr>
+        <tr><th>ID</th><th>Vehículo</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
         <?php while ($row = sqlsrv_fetch_array($lista, SQLSRV_FETCH_ASSOC)) { ?>
             <tr>
                 <td><?php echo $row["IdPresupuesto"]; ?></td>
@@ -122,7 +185,13 @@ $lista = sqlsrv_query($conn, "SELECT P.IdPresupuesto, V.Placa, P.FechaPresupuest
                 <td><?php echo $row["FechaPresupuesto"]->format("Y-m-d"); ?></td>
                 <td><?php echo number_format($row["Total"], 2); ?></td>
                 <td><?php echo $row["Estado"]; ?></td>
-                <td><a href="Presupuesto.php?id=<?php echo $row['IdPresupuesto']; ?>" class="btn">🔍 Ver</a></td>
+                <td>
+                    <a href="Presupuesto.php?id=<?php echo $row['IdPresupuesto']; ?>" class="btn">🔍 Ver</a>
+                    <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar presupuesto?');">
+                        <input type="hidden" name="idPresupuesto" value="<?php echo $row["IdPresupuesto"]; ?>">
+                        <button type="submit" name="eliminarPresupuesto" class="btn btn-red">🗑️</button>
+                    </form>
+                </td>
             </tr>
         <?php } ?>
     </table>
@@ -133,40 +202,65 @@ $lista = sqlsrv_query($conn, "SELECT P.IdPresupuesto, V.Placa, P.FechaPresupuest
            Estado: <?php echo $presupuesto["Estado"]; ?> | 
            Total: <b><?php echo number_format($presupuesto["Total"], 2); ?></b></p>
 
+        <!-- Editar estado -->
+        <form method="POST">
+            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
+            <label>Estado:</label>
+            <select name="estado">
+                <option value="Pendiente" <?php if ($presupuesto["Estado"]=="Pendiente") echo "selected"; ?>>Pendiente</option>
+                <option value="Aprobado" <?php if ($presupuesto["Estado"]=="Aprobado") echo "selected"; ?>>Aprobado</option>
+                <option value="Cancelado" <?php if ($presupuesto["Estado"]=="Cancelado") echo "selected"; ?>>Cancelado</option>
+            </select>
+            <button type="submit" name="editarPresupuesto" class="btn">✏️ Actualizar</button>
+        </form>
+
         <!-- Agregar detalle -->
         <form method="POST">
             <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
-            <label>Tipo:</label>
+            <h3>➕ Agregar Detalle</h3>
             <select name="tipo" required>
                 <option value="Servicio">Servicio</option>
                 <option value="Repuesto">Repuesto</option>
-            </select><br>
-            <label>Descripción:</label><br>
-            <input type="text" name="descripcion" required><br>
-            <label>Cantidad:</label><br>
-            <input type="number" name="cantidad" value="1" min="1" required><br>
-            <label>Precio unitario:</label><br>
-            <input type="number" step="0.01" name="precio" required><br>
-            <button type="submit" name="agregarDetalle" class="btn">➕ Agregar</button>
+            </select>
+            <input type="text" name="descripcion" placeholder="Descripción" required>
+            <input type="number" name="cantidad" value="1" min="1" required>
+            <input type="number" step="0.01" name="precio" placeholder="Precio unitario" required>
+            <button type="submit" name="agregarDetalle" class="btn">Agregar</button>
         </form>
 
         <!-- Detalle del presupuesto -->
-        <h3>Detalle</h3>
+        <h3>📌 Detalle</h3>
         <table>
-            <tr><th>ID</th><th>Tipo</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr>
+            <tr><th>ID</th><th>Tipo</th><th>Descripción</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th><th>Acciones</th></tr>
             <?php while ($d = sqlsrv_fetch_array($detalles, SQLSRV_FETCH_ASSOC)) { ?>
                 <tr>
                     <td><?php echo $d["IdDetalle"]; ?></td>
                     <td><?php echo $d["Tipo"]; ?></td>
                     <td><?php echo $d["Descripcion"]; ?></td>
-                    <td><?php echo $d["Cantidad"]; ?></td>
+                    <td>
+                        <form method="POST" style="display:inline;">
+                            <input type="hidden" name="idDetalle" value="<?php echo $d["IdDetalle"]; ?>">
+                            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
+                            <input type="number" name="cantidad" value="<?php echo $d["Cantidad"]; ?>" min="1">
+                            <input type="number" step="0.01" name="precio" value="<?php echo $d["PrecioUnitario"]; ?>">
+                            <button type="submit" name="editarDetalle" class="btn">✏️</button>
+                        </form>
+                    </td>
                     <td><?php echo number_format($d["PrecioUnitario"], 2); ?></td>
                     <td><?php echo number_format($d["Subtotal"], 2); ?></td>
+                    <td>
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('¿Eliminar este detalle?');">
+                            <input type="hidden" name="idDetalle" value="<?php echo $d["IdDetalle"]; ?>">
+                            <input type="hidden" name="idPresupuesto" value="<?php echo $presupuesto["IdPresupuesto"]; ?>">
+                            <button type="submit" name="eliminarDetalle" class="btn btn-red">🗑️</button>
+                        </form>
+                    </td>
                 </tr>
             <?php } ?>
         </table>
     <?php } ?>
-    <div style="text-align:center;">
+
+    <div style="text-align:center; margin-top:20px;">
         <a href="Vendedor.php">⬅ Volver al Panel Vendedor</a>
     </div>
 </body>
