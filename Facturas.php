@@ -193,8 +193,6 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <table>
         <tr>
             <th>ID Factura</th>
-            <th>Presupuesto</th>
-            <th>Historial</th>
             <th>Fecha</th>
             <th>Total</th>
             <th>Estado</th>
@@ -203,8 +201,6 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php foreach ($facturas as $f): ?>
             <tr>
                 <td><?= $f['IdFactura'] ?></td>
-                <td><?= $f['IdPresupuesto'] ?></td>
-                <td><?= $f['IdHistorial'] ?></td>
                 <td><?= $f['FechaFactura'] ?></td>
                 <td><?= $f['Total'] ?></td>
                 <td><?= $f['Estado'] ?></td>
@@ -219,3 +215,4 @@ $reparaciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </table>
 </body>
 </html>
+
